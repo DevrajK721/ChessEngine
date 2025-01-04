@@ -1,6 +1,8 @@
 # Build files
 /build/
 /tests/
+/cmake-build-debug/
+/.idea
 
 # Prerequisites
 *.d
@@ -10,6 +12,8 @@
 *.lo
 *.o
 *.obj
+*.idea
+*.xml
 
 # Precompiled Headers
 *.gch
