@@ -14,8 +14,7 @@ file(GLOB_RECURSE SOURCES "src/*.cpp")
 include_directories(${CMAKE_SOURCE_DIR}/include)
 
 # Add the executable
-add_executable(ChessEngine ${SOURCES})
+add_executable(ChessEngine ${SOURCES}
+        src/bitboard.cpp
+        include/bitboard.h)
 
-# Enable testing
-enable_testing()
-add_subdirectory(tests)
