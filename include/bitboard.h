@@ -5,6 +5,8 @@
 #include <string> // Fix: Include for std::string
 
 class Bitboard {
+private:
+	int enPassantTarget; // Index of square available for an en Passant, or -1 for none
 public:
 	uint64_t whitePawns;
 	uint64_t whiteKnights;
@@ -24,7 +26,10 @@ public:
 
 	void initialize();          // Initializes starting position
 	std::string displayBoard(); // Returns a string representation of the board
-	void makeMove(const std::string& move); // Function declaration
+	void makeMove(const std::string& move); // Makes a move on the board
+	int getEnPassantTarget() const; // Getter for enPassantTarget
+	uint64_t getWhitePawns() const { return whitePawns; } // Getter for whitePawns
+	uint64_t getBlackPawns() const { return blackPawns; } // Getter for blackPawns
 };
 
 #endif // BITBOARD_H
