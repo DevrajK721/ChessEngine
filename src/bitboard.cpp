@@ -24,109 +24,150 @@ void Bitboard::initialize() {
     blackBishops = 0x2400000000000000;
     blackQueens = 0x0800000000000000;
     blackKing = 0x1000000000000000;
+
+    enPassantTarget = -1;
 }
 
-std::string Bitboard::displayBoard() {
-    std::string board(64, '.'); // Empty squares as '.'
-
-    // Place pieces on the board
-    for (int i = 0; i < 64; ++i) {
-        uint64_t bit = 1ULL << i;
-
-        if (whitePawns & bit) board[i] = 'P';
-        else if (whiteKnights & bit) board[i] = 'N';
-        else if (whiteBishops & bit) board[i] = 'B';
-        else if (whiteRooks & bit) board[i] = 'R';
-        else if (whiteQueens & bit) board[i] = 'Q';
-        else if (whiteKing & bit) board[i] = 'K';
-
-        else if (blackPawns & bit) board[i] = 'p';
-        else if (blackKnights & bit) board[i] = 'n';
-        else if (blackBishops & bit) board[i] = 'b';
-        else if (blackRooks & bit) board[i] = 'r';
-        else if (blackQueens & bit) board[i] = 'q';
-        else if (blackKing & bit) board[i] = 'k';
-    }
-
-    // Convert the board into a visual representation with spacing
-    std::string display = "  a b c d e f g h\n"; // Add column labels
+std::string Bitboard::displayBoard() const {
+    std::string board;
     for (int rank = 7; rank >= 0; --rank) {
-        display += std::to_string(rank + 1) + " "; // Add rank number
+        board += std::to_string(rank + 1) + " "; // Add rank number
         for (int file = 0; file < 8; ++file) {
-            display += board[rank * 8 + file];
-            if (file < 7) display += " "; // Add space between squares
+            int index = rank * 8 + file;
+            uint64_t bit = 1ULL << index;
+
+            // Dynamically check all bitboards to determine the piece
+            if (whiteKing & bit) board += "K ";
+            else if (whiteQueens & bit) board += "Q ";
+            else if (whiteRooks & bit) board += "R ";
+            else if (whiteBishops & bit) board += "B ";
+            else if (whiteKnights & bit) board += "N ";
+            else if (whitePawns & bit) board += "P ";
+            else if (blackKing & bit) board += "k ";
+            else if (blackQueens & bit) board += "q ";
+            else if (blackRooks & bit) board += "r ";
+            else if (blackBishops & bit) board += "b ";
+            else if (blackKnights & bit) board += "n ";
+            else if (blackPawns & bit) board += "p ";
+            else board += ". "; // Empty square
         }
-        display += " " + std::to_string(rank + 1) + "\n"; // Add rank number at the end
+        board += std::to_string(rank + 1) + "\n"; // Add rank number again
     }
-    display += "  a b c d e f g h\n"; // Add column labels again
-    return display;
+    board += "  a b c d e f g h\n"; // Add file letters
+    return board;
 }
 
-void Bitboard::makeMove(const std::string& move) {
+
+void Bitboard::makeMove(const std::string& move, char promotionPiece) {
     if (move.length() != 4) {
         throw std::invalid_argument("Invalid move format. Use standard notation, e.g., e2e4.");
     }
 
     int sourceFile = move[0] - 'a';
     int sourceRank = move[1] - '1';
-    int destFile = move[2] - 'a';
-    int destRank = move[3] - '1';
+    int destFile   = move[2] - 'a';
+    int destRank   = move[3] - '1';
 
     int sourceIndex = sourceRank * 8 + sourceFile;
-    int destIndex = destRank * 8 + destFile;
+    int destIndex   = destRank * 8 + destFile;
 
     uint64_t sourceBit = 1ULL << sourceIndex;
-    uint64_t destBit = 1ULL << destIndex;
+    uint64_t destBit   = 1ULL << destIndex;
 
-    // Check for en passant capture
+    // --------------------------------------------------
+    // 1. Handle En Passant
+    // --------------------------------------------------
     if (destIndex == enPassantTarget + 8 || destIndex == enPassantTarget - 8) {
         uint64_t enPassantBit = 1ULL << enPassantTarget;
 
         if (whitePawns & sourceBit) {
-            whitePawns &= ~sourceBit;  // Remove white pawn from source
-            whitePawns |= destBit;     // Place white pawn on destination
-            blackPawns &= ~enPassantBit; // Remove captured black pawn
+            whitePawns &= ~sourceBit;
+            whitePawns |= destBit;
+            blackPawns &= ~enPassantBit;
         } else if (blackPawns & sourceBit) {
-            blackPawns &= ~sourceBit;  // Remove black pawn from source
-            blackPawns |= destBit;     // Place black pawn on destination
-            whitePawns &= ~enPassantBit; // Remove captured white pawn
+            blackPawns &= ~sourceBit;
+            blackPawns |= destBit;
+            whitePawns &= ~enPassantBit;
         }
 
-        enPassantTarget = -1; // Reset en passant target
+        enPassantTarget = -1;
         return;
     }
 
-    // Determine which piece is moving
+    // --------------------------------------------------
+    // 2. Identify Which Piece is Moving
+    // --------------------------------------------------
+    // We’ll store the pointer to whichever bitboard array is relevant
     uint64_t* pieceBitboard = nullptr;
+    bool movingWhite = false;
 
     if (whitePawns & sourceBit) {
         pieceBitboard = &whitePawns;
+        movingWhite = true;
+    } else if (blackPawns & sourceBit) {
+        pieceBitboard = &blackPawns;
+        movingWhite = false;
+    }
 
-        // Handle promotion for white pawns
-        if (destRank == 7) {
-            whitePawns &= ~sourceBit; // Remove white pawn
-            whiteQueens |= destBit;  // Promote to a queen
-            return;
+    if (!pieceBitboard) {
+        throw std::invalid_argument("No pawn found on the source square (or piece is not a pawn).");
+    }
+
+    // --------------------------------------------------
+    // 3. White Pawn Promotion
+    // --------------------------------------------------
+    if (movingWhite && destRank == 7 && (whitePawns & sourceBit)) {
+        // Remove occupant from the destination bit, just in case
+        clearSquare(destBit);
+
+        // Remove the original white pawn
+        whitePawns &= ~sourceBit;
+
+        // Add the chosen promotion piece
+        switch (promotionPiece) {
+            case 'R': whiteRooks   |= destBit; break;
+            case 'B': whiteBishops |= destBit; break;
+            case 'N': whiteKnights |= destBit; break;
+            case 'Q':
+            default:  whiteQueens  |= destBit; break;
         }
 
-        // Handle en passant target for white double push
+        return;
+    }
+
+    // --------------------------------------------------
+    // 4. Black Pawn Promotion
+    // --------------------------------------------------
+    if (!movingWhite && destRank == 0 && (blackPawns & sourceBit)) {
+        // Remove occupant from the destination bit, just in case
+        clearSquare(destBit);
+
+        // Remove the original black pawn
+        blackPawns &= ~sourceBit;
+
+        // Add the chosen promotion piece
+        switch (promotionPiece) {
+            case 'R': blackRooks   |= destBit; break;
+            case 'B': blackBishops |= destBit; break;
+            case 'N': blackKnights |= destBit; break;
+            case 'Q':
+            default:  blackQueens  |= destBit; break;
+        }
+
+        return;
+    }
+
+    // --------------------------------------------------
+    // 5. Non-Promotion Moves
+    // --------------------------------------------------
+    // Handle en passant target if it's a 2-step pawn move
+    if (movingWhite) {
         if (sourceRank == 1 && destRank == 3) {
             enPassantTarget = destIndex;
         } else {
             enPassantTarget = -1;
         }
-
-    } else if (blackPawns & sourceBit) {
-        pieceBitboard = &blackPawns;
-
-        // Handle promotion for black pawns
-        if (destRank == 0) {
-            blackPawns &= ~sourceBit; // Remove black pawn
-            blackQueens |= destBit;  // Promote to a queen
-            return;
-        }
-
-        // Handle en passant target for black double push
+    } else {
         if (sourceRank == 6 && destRank == 4) {
             enPassantTarget = destIndex;
         } else {
@@ -134,16 +175,32 @@ void Bitboard::makeMove(const std::string& move) {
         }
     }
 
-    if (!pieceBitboard) {
-        throw std::invalid_argument("No piece found on the source square.");
-    }
+    // If it’s a capture, remove occupant from destination.
+    // (For a more complete engine, you'd detect if there's an opponent piece.)
+    clearSquare(destBit);
 
-    // Update the bitboards for regular moves
-    *pieceBitboard &= ~sourceBit; // Remove piece from source
-    *pieceBitboard |= destBit;    // Place piece on destination
+    // Move the piece
+    *pieceBitboard &= ~sourceBit;
+    *pieceBitboard |= destBit;
 }
 
+void Bitboard::clearSquare(uint64_t squareBit) {
+    // Remove from white bitboards
+    whitePawns   &= ~squareBit;
+    whiteKnights &= ~squareBit;
+    whiteBishops &= ~squareBit;
+    whiteRooks   &= ~squareBit;
+    whiteQueens  &= ~squareBit;
+    whiteKing    &= ~squareBit;
 
+    // Remove from black bitboards
+    blackPawns   &= ~squareBit;
+    blackKnights &= ~squareBit;
+    blackBishops &= ~squareBit;
+    blackRooks   &= ~squareBit;
+    blackQueens  &= ~squareBit;
+    blackKing    &= ~squareBit;
+}
 
 
 int Bitboard::getEnPassantTarget() const {
