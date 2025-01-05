@@ -61,6 +61,11 @@ int main() {
         std::cout << "Testing Pawn Promotion for Black" << std::endl;
         board.makeMove("c2d1", 'N');
         std::cout << board.displayBoard() << std::endl;
+        std::cout << "Testing Legal Move Generation" << std::endl;
+        legalMoves = board.generateLegalMoves(false);
+        for (const auto& move : legalMoves) {
+            std::cout << move.move << std::endl;
+        }
         std::cout << "Ending Testing Sequence, note any bugs or errors" << std::endl;
 
     } catch (const std::exception& e) {
