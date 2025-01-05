@@ -3,6 +3,7 @@
 /tests/
 /cmake-build-debug/
 .idea/
+.idea/*
 
 # Prerequisites
 *.d
