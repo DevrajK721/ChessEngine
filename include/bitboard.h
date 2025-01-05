@@ -41,6 +41,14 @@ public:
 	uint64_t getBlackKnights() const { return blackKnights; } // Getter for blackKnights
 	uint64_t getWhiteKing() const { return whiteKing; } // Getter for whiteKing
 	uint64_t getBlackKing() const { return blackKing; } // Getter for blackKing
+	bool isSquareAttacked(int squareIndex, bool byWhite) const; // Determines if a square is attacked by a color
+	bool isSquareOccupied(int squareIndex) const; // Determines if a square is occupied
+	uint64_t getKnightAttacks(int squareIndex) const; // Returns the knight attacks for a square
+	uint64_t getBishopAttacks(int squareIndex) const; // Returns the bishop attacks for a square
+	uint64_t getRookAttacks(int squareIndex) const; // Returns the rook attacks for a square
+	uint64_t getQueenAttacks(int squareIndex) const; // Returns the queen attacks for a square
+	uint64_t getKingAttacks(int squareIndex) const; // Returns the king attacks for a square
+
 };
 
 #endif // BITBOARD_H
