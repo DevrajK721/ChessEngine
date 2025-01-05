@@ -10,7 +10,12 @@ int main() {
     std::cout << board.displayBoard() << std::endl;
 
     try {
-        // Testing Sequence for En Passant, Pawn Promotion and Casling for both white and Black
+        // Testing Sequence for En Passant, Pawn Promotion and Castling for both white and Black
+        std::cout << "Testing Legal Move Generation" << std::endl;
+        auto legalMoves = board.generateLegalMoves(true);
+        for (const auto& move : legalMoves) {
+            std::cout << move.move << std::endl;
+        }
         std::cout << "Playing e2e4" << std::endl;
         board.makeMove("e2e4"); // White pawn to e4
         std::cout << "Playing c7c5" << std::endl;

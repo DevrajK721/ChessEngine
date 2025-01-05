@@ -3,6 +3,30 @@
 
 #include <cstdint>
 #include <string> // Fix: Include for std::string
+#include <vector>
+
+class Move {
+public:
+	std::string move;  // The move string in algebraic notation (e.g., "e2e4")
+	char promotion;    // The promotion piece ('Q', 'R', 'B', 'N', or '\0' for none)
+
+	// Constructor
+	Move(const std::string& moveString, char promotionPiece = '\0')
+		: move(moveString), promotion(promotionPiece) {}
+};
+
+struct MoveState {
+	uint64_t whitePieces, blackPieces;
+	uint64_t whiteKing, blackKing;
+	uint64_t whiteQueens, blackQueens;
+	uint64_t whiteRooks, blackRooks;
+	uint64_t whiteBishops, blackBishops;
+	uint64_t whiteKnights, blackKnights;
+	uint64_t whitePawns, blackPawns;
+	bool canCastleWhiteKing, canCastleWhiteQueen;
+	bool canCastleBlackKing, canCastleBlackQueen;
+	int enPassantTarget;
+};
 
 class Bitboard {
 private:
@@ -14,6 +38,7 @@ public:
 	uint64_t whiteRooks = 0;
 	uint64_t whiteQueens = 0;
 	uint64_t whiteKing = 0;
+	uint64_t whitePieces = 0;
 
 	uint64_t blackPawns = 0;
 	uint64_t blackKnights = 0;
@@ -21,6 +46,7 @@ public:
 	uint64_t blackRooks = 0;
 	uint64_t blackQueens = 0;
 	uint64_t blackKing = 0;
+	uint64_t blackPieces = 0;
 
 	Bitboard(); // Constructor declaration
 
@@ -48,7 +74,24 @@ public:
 	uint64_t getRookAttacks(int squareIndex) const; // Returns the rook attacks for a square
 	uint64_t getQueenAttacks(int squareIndex) const; // Returns the queen attacks for a square
 	uint64_t getKingAttacks(int squareIndex) const; // Returns the king attacks for a square
-
+	uint64_t generateSlidingAttacks(int squareIndex, uint64_t occupied) const;
+	std::vector<Move> generateLegalMoves(bool isWhiteTurn); // Generates all legal moves for a color
+	std::vector<Move> generatePseudoLegalMoves(bool isWhiteTurn); // Generates all pseudo-legal moves for a color
+	void generatePawnMoves(std::vector<Move>& moves, bool isWhite); // Generates pawn moves
+	void generateKnightMoves(std::vector<Move>& moves, bool isWhite); // Generates knight moves
+	void precomputeKnightAttacks();
+	void generateSlidingPieceMoves(std::vector<Move>& moves, uint64_t pieceBitboard, bool isBishop, bool isWhite); // Correct declaration
+	void generateKingMoves(std::vector<Move>& moves, uint64_t kingBitboard, bool isWhite); // Generates king moves
+	void generateCastlingMoves(std::vector<Move>& moves, bool isWhite); // Generates castling moves
+	bool isBoundaryCrossed(int StartIndex, int currentIndex, int direction)  const;
+	bool isKingInCheck(bool isWhite) const; // Determines if a king is in check
+	void undoMove(const Move& move);
+	std::string formatMove(int sourceIndex, int targetIndex, char promotion = '\0'); // Keep default in header
+	uint64_t generatePawnAttacks(bool isWhite, uint64_t pawns) const; // Generates pawn attacks
+	uint64_t generateKnightAttacks(uint64_t knights) const; // Generates knight attacks
+	uint64_t generateKingAttacks(uint64_t king) const; // Generates king attacks
+	uint64_t getKingAttacks(uint64_t kingBitboard) const; // Returns the king attacks for a square
+	MoveState createMoveState() const;
 };
 
 #endif // BITBOARD_H
