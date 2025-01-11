@@ -13,13 +13,8 @@ Bitboard::Bitboard()
       blackBishops(0), blackRooks(0), blackQueens(0), blackKing(0), enPassantTarget(-1), whitePieces(0), blackPieces(0) {}
 
 // Castling Rights
-bool whiteCanCastleKingside = true;
-bool whiteCanCastleQueenside = true;
-bool blackCanCastleKingside = true;
-bool blackCanCastleQueenside = true;
-
-bool canCastleWhiteKing, canCastleWhiteQueen;
-bool canCastleBlackKing, canCastleBlackQueen;
+bool canCastleWhiteKing = true, canCastleWhiteQueen = true;
+bool canCastleBlackKing = true, canCastleBlackQueen = true;
 
 // Masks for ranks and files
 constexpr uint64_t FileA = 0x0101010101010101ULL;
@@ -184,10 +179,10 @@ MoveState Bitboard::createMoveState() const {
     state.blackKnights = blackKnights;
     state.whitePawns = whitePawns;
     state.blackPawns = blackPawns;
-    state.canCastleWhiteKing = whiteCanCastleKingside;
-    state.canCastleWhiteQueen = whiteCanCastleQueenside;
-    state.canCastleBlackKing = blackCanCastleKingside;
-    state.canCastleBlackQueen = blackCanCastleQueenside;
+    state.canCastleWhiteKing = canCastleWhiteKing;
+    state.canCastleWhiteQueen = canCastleWhiteQueen;
+    state.canCastleBlackKing = canCastleBlackKing;
+    state.canCastleBlackQueen = canCastleBlackQueen;
     state.enPassantTarget = enPassantTarget;
     return state;
 }
@@ -578,93 +573,154 @@ void Bitboard::makeMove(const std::string& move, char promotionPiece) {
     // 0. Handle Castling
     // --------------------------------------------------
     if (move == "e1g1" && (whiteKing & (1ULL << 4)) && (whiteRooks & (1ULL << 7))) { // White kingside castling
-        if (whiteCanCastleKingside && !isSquareAttacked(4, false) && !isSquareAttacked(5, false) && !isSquareAttacked(6, false)) {
+        uint64_t emptyMask = (1ULL << 5) | (1ULL << 6);
+        uint64_t occupied = whitePieces | blackPieces;
+        if (canCastleWhiteKing &&
+            !isSquareAttacked(4, false) &&
+            !isSquareAttacked(5, false) &&
+            !isSquareAttacked(6, false) &&
+            ((emptyMask & occupied) == 0)) {
             whiteKing &= ~(1ULL << 4); // Remove king from e1
             whiteKing |= (1ULL << 6);  // Place king on g1
             whiteRooks &= ~(1ULL << 7); // Remove rook from h1
             whiteRooks |= (1ULL << 5);  // Place rook on f1
-            whiteCanCastleKingside = false;
-            whiteCanCastleQueenside = false; // King moved
+            canCastleWhiteKing = false;
+            canCastleWhiteQueen = false; // King moved
             whitePieces = whitePawns | whiteKnights | whiteBishops |
               whiteRooks | whiteQueens  | whiteKing;
             blackPieces = blackPawns | blackKnights | blackBishops |
                           blackRooks | blackQueens  | blackKing;
             return;
-        } else {
-            throw std::invalid_argument("Illegal kingside castling for white.");
         }
     } else if (move == "e1c1" && (whiteKing & (1ULL << 4)) && (whiteRooks & (1ULL << 0))) { // White queenside castling
-        if (whiteCanCastleQueenside && !isSquareAttacked(4, false) && !isSquareAttacked(3, false) && !isSquareAttacked(2, false)) {
+        uint64_t emptyMask = (1ULL << 1) | (1ULL << 2) | (1ULL << 3);
+        uint64_t occupied = whitePieces | blackPieces;
+        if (canCastleWhiteQueen && !isSquareAttacked(4, false) && !isSquareAttacked(3, false) && !isSquareAttacked(2, false) && (emptyMask & occupied) == 0) {
             whiteKing &= ~(1ULL << 4); // Remove king from e1
             whiteKing |= (1ULL << 2);  // Place king on c1
             whiteRooks &= ~(1ULL << 0); // Remove rook from a1
             whiteRooks |= (1ULL << 3);  // Place rook on d1
-            whiteCanCastleKingside = false;
-            whiteCanCastleQueenside = false; // King moved
+            canCastleWhiteKing = false;
+            canCastleWhiteQueen = false; // King moved
             whitePieces = whitePawns | whiteKnights | whiteBishops |
               whiteRooks | whiteQueens  | whiteKing;
             blackPieces = blackPawns | blackKnights | blackBishops |
                           blackRooks | blackQueens  | blackKing;
             return;
-        } else {
-            throw std::invalid_argument("Illegal queenside castling for white.");
         }
     } else if (move == "e8g8" && (blackKing & (1ULL << 60)) && (blackRooks & (1ULL << 63))) { // Black kingside castling
-        if (blackCanCastleKingside && !isSquareAttacked(60, true) && !isSquareAttacked(61, true) && !isSquareAttacked(62, true)) {
+        uint64_t emptyMask = (1ULL << 61) | (1ULL << 62);
+        uint64_t occupied = whitePieces | blackPieces;
+
+        if (canCastleBlackKing &&
+            !isSquareAttacked(60, true) && // e8 not attacked
+            !isSquareAttacked(61, true) && // f8 not attacked
+            !isSquareAttacked(62, true) && // g8 not attacked
+            ((emptyMask & occupied) == 0)) {
             blackKing &= ~(1ULL << 60); // Remove king from e8
             blackKing |= (1ULL << 62);  // Place king on g8
             blackRooks &= ~(1ULL << 63); // Remove rook from h8
             blackRooks |= (1ULL << 61);  // Place rook on f8
-            blackCanCastleKingside = false;
-            blackCanCastleQueenside = false; // King moved
+            canCastleBlackKing = false;
+            canCastleBlackQueen = false; // King moved
             whitePieces = whitePawns | whiteKnights | whiteBishops |
               whiteRooks | whiteQueens  | whiteKing;
             blackPieces = blackPawns | blackKnights | blackBishops |
                           blackRooks | blackQueens  | blackKing;
             return;
-        } else {
-            throw std::invalid_argument("Illegal kingside castling for black.");
         }
     } else if (move == "e8c8" && (blackKing & (1ULL << 60)) && (blackRooks & (1ULL << 56))) { // Black queenside castling
-        if (blackCanCastleQueenside && !isSquareAttacked(60, true) && !isSquareAttacked(59, true) && !isSquareAttacked(58, true)) {
+        uint64_t emptyMask = (1ULL << 57) | (1ULL << 58) | (1ULL << 59);
+        uint64_t occupied = whitePieces | blackPieces;
+
+        if (canCastleBlackQueen &&
+            !isSquareAttacked(60, true) && // e8 not attacked
+            !isSquareAttacked(59, true) && // d8 not attacked
+            !isSquareAttacked(58, true) && // c8 not attacked
+            ((emptyMask & occupied) == 0))  {
             blackKing &= ~(1ULL << 60); // Remove king from e8
             blackKing |= (1ULL << 58);  // Place king on c8
             blackRooks &= ~(1ULL << 56); // Remove rook from a8
             blackRooks |= (1ULL << 59);  // Place rook on d8
-            blackCanCastleKingside = false;
-            blackCanCastleQueenside = false; // King moved
+            canCastleBlackKing = false;
+            canCastleBlackQueen = false; // King moved
             whitePieces = whitePawns | whiteKnights | whiteBishops |
               whiteRooks | whiteQueens  | whiteKing;
             blackPieces = blackPawns | blackKnights | blackBishops |
                           blackRooks | blackQueens  | blackKing;
             return;
-        } else {
-            throw std::invalid_argument("Illegal queenside castling for black.");
         }
     }
 
-    // --------------------------------------------------
-    // 1. Handle En Passant
-    // --------------------------------------------------
-    if (destIndex == enPassantTarget + 8 || destIndex == enPassantTarget - 8) {
-        uint64_t enPassantBit = 1ULL << enPassantTarget;
+    // -----------------------------
+    // White en passant
+    // -----------------------------
+    if ((whitePawns & sourceBit)) {
+        // White en passant captures occur if the DEST is exactly "enPassantTarget"
+        // and the move is from sourceIndex => sourceIndex+7 or +9 (left or right).
+        // In your engine, if the user typed "d5e6", then:
+        //   sourceIndex=35, destIndex=44 => difference=+9
+        //   enPassantTarget should be 44 if black just moved e7->e5
+        if (destIndex == enPassantTarget &&
+            (destIndex == sourceIndex + 7 || destIndex == sourceIndex + 9))
+        {
+            uint64_t enPassantBit = 1ULL << enPassantTarget;
 
-        if (whitePawns & sourceBit) {
+            // Move the white pawn
             whitePawns &= ~sourceBit;
             whitePawns |= destBit;
-            blackPawns &= ~enPassantBit;
-        } else if (blackPawns & sourceBit) {
+
+            // Remove the black pawn that was "en passant" captured
+            // It's on the rank behind the enPassantTarget:
+            // If White captured left (source+7), that means the black pawn
+            // is at enPassantTarget - 8. If White captured right (source+9),
+            // that means the black pawn is also at enPassantTarget - 8.
+            // Because black's original square is one rank behind enPassantTarget.
+            uint64_t captureSquareBit = (1ULL << (enPassantTarget - 8));
+            blackPawns &= ~captureSquareBit;
+
+            // Clear en passant
+            enPassantTarget = -1;
+
+            // Recompute occupancy
+            whitePieces = whitePawns | whiteKnights | whiteBishops | whiteRooks | whiteQueens | whiteKing;
+            blackPieces = blackPawns | blackKnights | blackBishops | blackRooks | blackQueens | blackKing;
+
+            return; // Done with move
+        }
+    }
+
+    // -----------------------------
+    // Black en passant
+    // -----------------------------
+    else if ((blackPawns & sourceBit)) {
+        // Black en passant captures occur if the DEST is "enPassantTarget"
+        // and the move is sourceIndex => sourceIndex-7 or -9 (left or right).
+        if (destIndex == enPassantTarget &&
+            (destIndex == sourceIndex - 7 || destIndex == sourceIndex - 9))
+        {
+            uint64_t enPassantBit = 1ULL << enPassantTarget;
+
+            // Move the black pawn
             blackPawns &= ~sourceBit;
             blackPawns |= destBit;
-            whitePawns &= ~enPassantBit;
-        }
 
-        enPassantTarget = -1;
-        whitePieces = whitePawns | whiteKnights | whiteBishops |
-              whiteRooks | whiteQueens  | whiteKing;
-        blackPieces = blackPawns | blackKnights | blackBishops |
-                      blackRooks | blackQueens  | blackKing;
-        return;
+            // Remove the white pawn that was "en passant" captured
+            // It's on the rank behind the enPassantTarget:
+            // For black, the captured pawn is at enPassantTarget + 8
+            // because black's capture squares are downward.
+            uint64_t captureSquareBit = (1ULL << (enPassantTarget + 8));
+            whitePawns &= ~captureSquareBit;
+
+            // Clear en passant
+            enPassantTarget = -1;
+
+            // Recompute occupancy
+            whitePieces = whitePawns | whiteKnights | whiteBishops | whiteRooks | whiteQueens | whiteKing;
+            blackPieces = blackPawns | blackKnights | blackBishops | blackRooks | blackQueens | blackKing;
+
+            return; // Done with move
+        }
     }
 
     // --------------------------------------------------
@@ -789,19 +845,19 @@ void Bitboard::makeMove(const std::string& move, char promotionPiece) {
 
     // Ensure castling rights are updated when king or rook moves
     if (sourceIndex == 4) { // White king moved
-        whiteCanCastleKingside = false;
-        whiteCanCastleQueenside = false;
+        canCastleWhiteKing = false;
+        canCastleWhiteQueen = false;
     } else if (sourceIndex == 60) { // Black king moved
-        blackCanCastleKingside = false;
-        blackCanCastleQueenside = false;
+        canCastleBlackKing = false;
+        canCastleBlackQueen = false;
     } else if (sourceIndex == 7) { // White kingside rook moved
-        whiteCanCastleKingside = false;
+        canCastleWhiteKing = false;
     } else if (sourceIndex == 0) { // White queenside rook moved
-        whiteCanCastleQueenside = false;
+        canCastleWhiteQueen = false;
     } else if (sourceIndex == 63) { // Black kingside rook moved
-        blackCanCastleKingside = false;
+        canCastleBlackKing = false;
     } else if (sourceIndex == 56) { // Black queenside rook moved
-        blackCanCastleQueenside = false;
+        canCastleBlackQueen = false;
     }
 
     // If it’s a capture, remove occupant from destination.
@@ -818,6 +874,8 @@ void Bitboard::makeMove(const std::string& move, char promotionPiece) {
               whiteRooks | whiteQueens  | whiteKing;
     blackPieces = blackPawns | blackKnights | blackBishops |
                   blackRooks | blackQueens  | blackKing;
+    // Then do:
+    uint64_t occupied = (whitePieces | blackPieces);
 }
 
 void Bitboard::clearSquare(uint64_t squareBit) {
@@ -839,47 +897,47 @@ void Bitboard::clearSquare(uint64_t squareBit) {
 }
 
 bool Bitboard::isSquareAttacked(int squareIndex, bool byWhite) const {
-    uint64_t squareBit = 1ULL << squareIndex;
+        uint64_t squareBit = 1ULL << squareIndex;
 
-    // 1) Pawns
-    if (byWhite) {
-        if ((whitePawns & (squareBit >> 7) & ~0x8080808080808080ULL) || // Attack from left
-            (whitePawns & (squareBit >> 9) & ~0x0101010101010101ULL)) { // Attack from right
-            return true;
-            }
-    } else {
-        if ((blackPawns & (squareBit << 7) & ~0x0101010101010101ULL) || // Attack from left
-            (blackPawns & (squareBit << 9) & ~0x8080808080808080ULL)) { // Attack from right
-            return true;
-            }
-    }
+        // 1) Pawns
+        if (byWhite) {
+            if ((whitePawns & (squareBit >> 7) & ~0x8080808080808080ULL) || // Attack from left
+                (whitePawns & (squareBit >> 9) & ~0x0101010101010101ULL)) { // Attack from right
+                return true;
+                }
+        } else {
+            if ((blackPawns & (squareBit << 7) & ~0x0101010101010101ULL) || // Attack from left
+                (blackPawns & (squareBit << 9) & ~0x8080808080808080ULL)) { // Attack from right
+                return true;
+                }
+        }
 
-    // 2) Knights
-    uint64_t knightAttacks = getKnightAttacks(squareIndex);
-    if (byWhite && (whiteKnights & knightAttacks)) return true;
-    if (!byWhite && (blackKnights & knightAttacks)) return true;
+        // 2) Knights
+        uint64_t knightAttacks = getKnightAttacks(squareIndex);
+        if (byWhite && (whiteKnights & knightAttacks)) return true;
+        if (!byWhite && (blackKnights & knightAttacks)) return true;
 
-    // 3) Bishops
-    uint64_t bishopAttacks = getBishopAttacks(squareIndex);
-    if (byWhite && (whiteBishops & bishopAttacks)) return true;
-    if (!byWhite && (blackBishops & bishopAttacks)) return true;
+        // 3) Bishops
+        uint64_t bishopAttacks = getBishopAttacks(squareIndex);
+        if (byWhite && (whiteBishops & bishopAttacks)) return true;
+        if (!byWhite && (blackBishops & bishopAttacks)) return true;
 
-    // 4) Rooks
-    uint64_t rookAttacks = getRookAttacks(squareIndex);
-    if (byWhite && (whiteRooks & rookAttacks)) return true;
-    if (!byWhite && (blackRooks & rookAttacks)) return true;
+        // 4) Rooks
+        uint64_t rookAttacks = getRookAttacks(squareIndex);
+        if (byWhite && (whiteRooks & rookAttacks)) return true;
+        if (!byWhite && (blackRooks & rookAttacks)) return true;
 
-    // 5) Queens
-    uint64_t queenAttacks = getQueenAttacks(squareIndex);
-    if (byWhite && (whiteQueens & queenAttacks)) return true;
-    if (!byWhite && (blackQueens & queenAttacks)) return true;
+        // 5) Queens
+        uint64_t queenAttacks = getQueenAttacks(squareIndex);
+        if (byWhite && (whiteQueens & queenAttacks)) return true;
+        if (!byWhite && (blackQueens & queenAttacks)) return true;
 
-    // 6) Kings
-    uint64_t kingAttacks = getKingAttacks(squareIndex);
-    if (byWhite && (whiteKing & kingAttacks)) return true;
-    if (!byWhite && (blackKing & kingAttacks)) return true;
+        // 6) Kings
+        uint64_t kingAttacks = getKingAttacks(squareIndex);
+        if (byWhite && (whiteKing & kingAttacks)) return true;
+        if (!byWhite && (blackKing & kingAttacks)) return true;
 
-    return false;
+        return false;
 }
 
 uint64_t Bitboard::getKnightAttacks(int squareIndex) const {
@@ -1023,20 +1081,15 @@ uint64_t Bitboard::generateKingAttacks(uint64_t kingBitboard) const {
 }
 
 bool Bitboard::isKingInCheck(bool isWhite) const {
-    int kingIndex = bitScanForward(isWhite ? whiteKing : blackKing); // Locate the king's position
-    uint64_t kingBit = 1ULL << kingIndex;
+    // 1) Locate the actual king's square for the color "isWhite"
+    int kingIndex = bitScanForward(isWhite ? whiteKing : blackKing);
+    if (kingIndex == -1) {
+        // No king found (should never happen in normal chess)
+        return false;
+    }
 
-    // Check if the king's position is under attack by any opponent's piece
-    uint64_t opponentPieces = isWhite ? blackPieces : whitePieces;
-
-    // Combine all possible attacks
-    uint64_t attacks = generatePawnAttacks(!isWhite, kingBit) |
-                       generateKnightAttacks(kingBit) |
-                       generateSlidingAttacks(kingIndex, whitePieces | blackPieces) |
-                       generateKingAttacks(kingIndex);
-
-    // Return true if any opponent piece attacks the king's square
-    return (attacks & kingBit) != 0;
+    // 2) Check if that king square is attacked by the opponent
+    return isSquareAttacked(kingIndex, !isWhite);
 }
 
 void Bitboard::undoMove(const Move& move) {
@@ -1087,31 +1140,111 @@ void Bitboard::generateKingMoves(std::vector<Move>& moves, uint64_t kingBitboard
 }
 
 void Bitboard::generateCastlingMoves(std::vector<Move>& moves, bool isWhite) {
+    // 1) Which king bitboard?
     uint64_t kingBitboard = isWhite ? whiteKing : blackKing;
 
-    // Check if the king is in its starting position
-    if ((kingBitboard & (isWhite ? 0x10ULL : 0x1000000000000000ULL)) == 0) {
+    // 2) The king’s starting square for White = e1 (bit 4), Black = e8 (bit 60).
+    uint64_t kingStart = isWhite ? (1ULL << 4) : (1ULL << 60);
+
+    // 3) If the king isn’t on its start square, no castling
+    if ((kingBitboard & kingStart) == 0) {
         return;
     }
 
-    // Kingside Castling
-    if ((isWhite && canCastleWhiteKing) || (!isWhite && canCastleBlackKing)) {
-        uint64_t castleMask = isWhite ? 0x60ULL : 0x6000000000000000ULL;
-        if ((castleMask & (whitePieces | blackPieces)) == 0 && !isKingInCheck(isWhite)) {
-            if (!isSquareAttacked(isWhite, isWhite ? 5 : 61) && !isSquareAttacked(isWhite, isWhite ? 6 : 62)) {
-                moves.emplace_back(formatMove(isWhite ? 4 : 60, isWhite ? 6 : 62));
-            }
+    // 4) Occupancy bitmask
+    uint64_t occupied = whitePieces | blackPieces;
+
+    // We’ll define a helper lambda to add the move if squares are not attacked
+    auto addCastlingMoveIfNotAttacked = [&](int eSq, int fSq, int gSq, uint64_t emptyMask,
+                                            bool canCastleKingSide, bool canCastleQueenSide,
+                                            bool checkingKingSide) {
+        // If we’re checking kingside, ensure canCastleKingSide == true;
+        // if queenside, ensure canCastleQueenSide == true.
+        if (!checkingKingSide && !canCastleQueenSide) return;
+        if (checkingKingSide && !canCastleKingSide) return;
+
+        // Are these squares physically empty (besides the king on eSq)?
+        // For kingside: typically fSq/gSq must be empty.
+        // For queenside: typically bSq/cSq/dSq or so, depending on the side.
+        if ((emptyMask & occupied) != 0) {
+            // Some squares are occupied => no castling
+            return;
         }
+
+        // Also check squares eSq, fSq, gSq aren’t attacked by the opponent
+        // eSq = king’s start, fSq/gSq = path squares
+        // For black, we pass byWhite = true
+        // For white, we pass byWhite = false
+        bool eAtt = isSquareAttacked(eSq, !isWhite);
+        bool fAtt = isSquareAttacked(fSq, !isWhite);
+        bool gAtt = isSquareAttacked(gSq, !isWhite);
+        if (!eAtt && !fAtt && !gAtt) {
+            // e1->g1 or e8->g8, e1->c1 or e8->c8, etc.
+            moves.emplace_back(formatMove(eSq, gSq));
+        }
+    };
+
+    // 5) Actually do the kingside and queenside checks
+
+    // ------------------------------
+    // A) Kingside
+    // ------------------------------
+    if (isWhite) {
+        // White: e1 => 4, f1 => 5, g1 => 6
+        // squares f1,g1 must be empty
+        uint64_t ksEmptyMask = (1ULL << 5) | (1ULL << 6);
+
+        addCastlingMoveIfNotAttacked(
+            4, 5, 6,           // eSq=4, fSq=5, gSq=6
+            ksEmptyMask,       // squares to be empty
+            canCastleWhiteKing,
+            canCastleWhiteQueen,
+            /*checkingKingSide=*/true
+        );
+    } else {
+        // Black: e8 => 60, f8 => 61, g8 => 62
+        // squares f8,g8 must be empty
+        uint64_t ksEmptyMask = (1ULL << 61) | (1ULL << 62);
+
+        addCastlingMoveIfNotAttacked(
+            60, 61, 62,
+            ksEmptyMask,
+            canCastleBlackKing,
+            canCastleBlackQueen,
+            /*checkingKingSide=*/true
+        );
     }
 
-    // Queenside Castling
-    if ((isWhite && canCastleWhiteQueen) || (!isWhite && canCastleBlackQueen)) {
-        uint64_t castleMask = isWhite ? 0xEULL : 0xE00000000000000ULL;
-        if ((castleMask & (whitePieces | blackPieces)) == 0 && !isKingInCheck(isWhite)) {
-            if (!isSquareAttacked(isWhite, isWhite ? 3 : 59) && !isSquareAttacked(isWhite, isWhite ? 2 : 58)) {
-                moves.emplace_back(formatMove(isWhite ? 4 : 60, isWhite ? 2 : 58));
-            }
-        }
+    // ------------------------------
+    // B) Queenside
+    // ------------------------------
+    if (isWhite) {
+        // White: e1 => 4, c1 => 2, squares b1(1), c1(2), d1(3) must be empty
+        // Typically we only need c1,d1,b1 to be empty, but the standard approach is b1,c1,d1
+        uint64_t qsEmptyMask = (1ULL << 1) | (1ULL << 2) | (1ULL << 3);
+
+        // We want eSq=4, fSq=3, gSq=2 in the sense of e1->(c1).
+        // But for simplicity, call them (eSq=4, fSq=3, gSq=2).
+        // So we check e1=4, d1=3, c1=2 for attacks.
+        addCastlingMoveIfNotAttacked(
+            4, 3, 2,           // eSq=4, fSq=3, gSq=2
+            qsEmptyMask,
+            canCastleWhiteKing,
+            canCastleWhiteQueen,
+            /*checkingKingSide=*/false
+        );
+    } else {
+        // Black: e8 => 60, c8 => 58, squares b8(57), c8(58), d8(59) must be empty
+        uint64_t qsEmptyMask = (1ULL << 57) | (1ULL << 58) | (1ULL << 59);
+
+        // eSq=60, fSq=59, gSq=58 for e8->c8
+        addCastlingMoveIfNotAttacked(
+            60, 59, 58,
+            qsEmptyMask,
+            canCastleBlackKing,
+            canCastleBlackQueen,
+            /*checkingKingSide=*/false
+        );
     }
 }
 

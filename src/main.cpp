@@ -1,75 +1,121 @@
-#include "bitboard.h"
 #include <iostream>
-#include <bitset>
+#include "bitboard.h"
+#include <vector>
+#include <cctype>
+
+void displayWelcomeMessage() {
+    std::cout << "\033[94mWelcome to Chess!\033[0m\n";
+    std::cout << "Type your moves in standard chess notation (e.g., e2e4).\n";
+    std::cout << "Type 'moves' to list all legal moves.\n";
+    std::cout << "Type 'moves <square>' (e.g., moves e2) to list moves for a specific piece.\n";
+    std::cout << "Type 'exit' to quit.\n";
+}
+
+int squareToIndex(const std::string& square) {
+    if (square.length() != 2 || square[0] < 'a' || square[0] > 'h' || square[1] < '1' || square[1] > '8') {
+        return -1;
+    }
+    int file = square[0] - 'a';
+    int rank = square[1] - '1';
+    return rank * 8 + file;
+}
+
+void displayMovesForSquare(Bitboard& board, bool isWhiteTurn, const std::string& square) {
+    int squareIndex = squareToIndex(square);
+    if (squareIndex == -1) {
+        std::cout << "Invalid square. Please use valid chess notation (e.g., e2).\n";
+        return;
+    }
+
+    std::vector<Move> legalMoves = board.generateLegalMoves(isWhiteTurn);
+    bool found = false;
+
+    std::cout << "\033[93mLegal moves for square " << square << ":\033[0m\n";
+    for (const auto& move : legalMoves) {
+        if (move.move.substr(0, 2) == square) {
+            found = true;
+            std::cout << move.move;
+            if (move.move.find('x') != std::string::npos) {
+                std::cout << " (Capture)";
+            } else if (move.move.find('O') != std::string::npos) {
+                std::cout << " (Castling)";
+            }
+            std::cout << "\n";
+        }
+    }
+
+    if (!found) {
+        std::cout << "No legal moves available for this square.\n";
+    }
+}
 
 int main() {
     Bitboard board;
     board.initialize();
 
-    std::cout << "Initial Chessboard:\n";
-    std::cout << board.displayBoard() << std::endl;
+    bool isWhiteTurn = true;
+    std::string input;
 
-    try {
-        // Testing Sequence for En Passant, Pawn Promotion and Castling for both white and Black
-        std::cout << "Testing Legal Move Generation" << std::endl;
-        auto legalMoves = board.generateLegalMoves(true);
-        for (const auto& move : legalMoves) {
-            std::cout << move.move << std::endl;
-        }
-        std::cout << "Playing e2e4" << std::endl;
-        board.makeMove("e2e4"); // White pawn to e4
-        std::cout << "Playing c7c5" << std::endl;
-        board.makeMove("c7c5"); // Black pawn to c5
-        std::cout << "Playing f1b5" << std::endl;
-        board.makeMove("f1b5"); // White bishop to b5
-        std::cout << "Playing e7e6" << std::endl;
-        board.makeMove("e7e6"); // Black pawn to e6
-        std::cout << "Playing e4e5" << std::endl;
-        board.makeMove("e4e5"); // White pawn to e5
-        std::cout << "Playing f7f5" << std::endl;
-        board.makeMove("f7f5"); // Black pawn to f5
-        std::cout << "Testing En Passant for White" << std::endl;
-        board.makeMove("e5f6"); // White pawn captures black pawn on f6
-        std::cout << board.displayBoard() << std::endl;
-        std::cout << "Playing c5c4" << std::endl;
-        board.makeMove("c5c4"); // Black pawn to c4
-        std::cout << "Playing d2d4" << std::endl;
-        board.makeMove("d2d4"); // White pawn to d4
-        std::cout << "Testing En Passant for Black" << std::endl;
-        board.makeMove("c4d3"); // Black pawn captures white pawn on d3
-        std::cout << board.displayBoard() << std::endl;
-        std::cout << "Playing g1f3" << std::endl;
-        board.makeMove("g1f3"); // White knight to f3
-        std::cout << "Playing g8f6" << std::endl;
-        board.makeMove("g8f6"); // Black knight to f6
-        std::cout << "Testing White King Side Castling" << std::endl;
-        board.makeMove("e1g1"); // White king side castling
-        std::cout << board.displayBoard() << std::endl;
-        std::cout << "Playing f8b4" << std::endl;
-        board.makeMove("f8b4"); // Black bishop to b4
-        std::cout << "Playing b1c3" << std::endl;
-        board.makeMove("b1c3"); // White knight to c3
-        std::cout << "Testing Black King Side Castling" << std::endl;
-        board.makeMove("e8g8"); // Black king side castling
-        std::cout << board.displayBoard() << std::endl;
-        std::cout << "Playing b5d7" << std::endl;
-        board.makeMove("b5d7"); // White bishop to d7
-        std::cout << "Playing d3c2" << std::endl;
-        board.makeMove("d3c2"); // Black pawn to c2
-        std::cout << "Playing c1g5" << std::endl;
-        board.makeMove("c1g5"); // White bishop to g5
-        std::cout << "Testing Pawn Promotion for Black" << std::endl;
-        board.makeMove("c2d1", 'N');
-        std::cout << board.displayBoard() << std::endl;
-        std::cout << "Testing Legal Move Generation" << std::endl;
-        legalMoves = board.generateLegalMoves(false);
-        for (const auto& move : legalMoves) {
-            std::cout << move.move << std::endl;
-        }
-        std::cout << "Ending Testing Sequence, note any bugs or errors" << std::endl;
+    displayWelcomeMessage();
 
-    } catch (const std::exception& e) {
-        std::cerr << "Error: " << e.what() << std::endl;
+    while (true) {
+        std::cout << "\n";
+        std::cout << (isWhiteTurn ? "\033[97mWhite\033[0m" : "\033[90mBlack\033[0m") << " to move:\n";
+        std::cout << board.displayBoard();
+        std::cout << "Enter your move: ";
+        std::getline(std::cin, input);
+
+        if (input == "exit") {
+            break;
+        } else if (input.substr(0, 5) == "moves") {
+            if (input.length() == 5) {
+                auto legalMoves = board.generateLegalMoves(isWhiteTurn);
+                std::cout << "\033[92mTotal legal moves: \033[0m" << legalMoves.size() << "\n";
+                for (const auto& move : legalMoves) {
+                    std::cout << move.move;
+                    if (move.move.find('x') != std::string::npos) {
+                        std::cout << " (Capture)";
+                    } else if (move.move.find('O') != std::string::npos) {
+                        std::cout << " (Castling)";
+                    }
+                    std::cout << "\n";
+                }
+            } else {
+                std::string square = input.substr(6); // Extract square after "moves "
+                displayMovesForSquare(board, isWhiteTurn, square);
+            }
+            continue;
+        }
+
+        // Validate and make move
+        auto legalMoves = board.generateLegalMoves(isWhiteTurn);
+        bool validMove = false;
+
+        for (const auto& move : legalMoves) {
+            if (move.move == input) {
+                board.makeMove(input);
+                validMove = true;
+                break;
+            }
+        }
+
+        if (!validMove) {
+            std::cout << "\033[91mInvalid move. Try again.\033[0m\n";
+            continue;
+        }
+
+        // Check for game end conditions
+        if (board.generateLegalMoves(!isWhiteTurn).empty()) {
+            if (board.isKingInCheck(!isWhiteTurn)) {
+                std::cout << (isWhiteTurn ? "White" : "Black") << " wins by checkmate!\n";
+            } else {
+                std::cout << "Stalemate!\n";
+            }
+            break;
+        }
+
+        // Switch turn
+        isWhiteTurn = !isWhiteTurn;
     }
 
     return 0;
