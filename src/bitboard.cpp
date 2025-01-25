@@ -84,86 +84,114 @@ void Bitboard::makeMove(const std::string& move, char promotionPiece) {
     // --------------------------------------------------
     // 0. Handle Castling
     // --------------------------------------------------
-    if (move == "e1g1" && (whiteKing & (1ULL << 4)) && (whiteRooks & (1ULL << 7))) { // White kingside castling
-        uint64_t emptyMask = (1ULL << 5) | (1ULL << 6);
-        uint64_t occupied = whitePieces | blackPieces;
+    if (move == "e1g1" && (whiteKing & (1ULL << 4)) && (whiteRooks & (1ULL << 7))) {
+        // White kingside castling (King on e1, Rook on h1)
+        uint64_t emptyMask = (1ULL << 5) | (1ULL << 6); // squares f1, g1
+        uint64_t occupied  = whitePieces | blackPieces;
+
         if (canCastleWhiteKing &&
-            !isSquareAttacked(4, false) &&
-            !isSquareAttacked(5, false) &&
-            !isSquareAttacked(6, false) &&
-            ((emptyMask & occupied) == 0)) {
-            whiteKing &= ~(1ULL << 4); // Remove king from e1
-            whiteKing |= (1ULL << 6);  // Place king on g1
-            whiteRooks &= ~(1ULL << 7); // Remove rook from h1
-            whiteRooks |= (1ULL << 5);  // Place rook on f1
-            canCastleWhiteKing = false;
-            canCastleWhiteQueen = false; // King moved
+            !isSquareAttacked(4, false) &&  // e1 not attacked
+            !isSquareAttacked(5, false) &&  // f1 not attacked
+            !isSquareAttacked(6, false) &&  // g1 not attacked
+            ((emptyMask & occupied) == 0))  // f1,g1 must be empty
+        {
+            // Perform the castling move
+            whiteKing  &= ~(1ULL << 4);   // remove King from e1
+            whiteKing  |=  (1ULL << 6);   // place King on g1
+            whiteRooks &= ~(1ULL << 7);   // remove Rook from h1
+            whiteRooks |=  (1ULL << 5);   // place Rook on f1
+            canCastleWhiteKing  = false;  // King moved
+            canCastleWhiteQueen = false;  // King moved
             whitePieces = whitePawns | whiteKnights | whiteBishops |
-              whiteRooks | whiteQueens  | whiteKing;
+                        whiteRooks | whiteQueens | whiteKing;
             blackPieces = blackPawns | blackKnights | blackBishops |
-                          blackRooks | blackQueens  | blackKing;
+                        blackRooks | blackQueens | blackKing;
             return;
+        } else {
+            throw std::invalid_argument("Invalid move for white kingside castling (e1g1).");
         }
-    } else if (move == "e1c1" && (whiteKing & (1ULL << 4)) && (whiteRooks & (1ULL << 0))) { // White queenside castling
-        uint64_t emptyMask = (1ULL << 1) | (1ULL << 2) | (1ULL << 3);
-        uint64_t occupied = whitePieces | blackPieces;
-        if (canCastleWhiteQueen && !isSquareAttacked(4, false) && !isSquareAttacked(3, false) && !isSquareAttacked(2, false) && (emptyMask & occupied) == 0) {
-            whiteKing &= ~(1ULL << 4); // Remove king from e1
-            whiteKing |= (1ULL << 2);  // Place king on c1
-            whiteRooks &= ~(1ULL << 0); // Remove rook from a1
-            whiteRooks |= (1ULL << 3);  // Place rook on d1
-            canCastleWhiteKing = false;
-            canCastleWhiteQueen = false; // King moved
+
+    } else if (move == "e1c1" && (whiteKing & (1ULL << 4)) && (whiteRooks & (1ULL << 0))) {
+        // White queenside castling (King on e1, Rook on a1)
+        uint64_t emptyMask = (1ULL << 1) | (1ULL << 2) | (1ULL << 3); // squares b1,c1,d1
+        uint64_t occupied  = whitePieces | blackPieces;
+
+        if (canCastleWhiteQueen &&
+            !isSquareAttacked(4, false) &&  // e1 not attacked
+            !isSquareAttacked(3, false) &&  // d1 not attacked
+            !isSquareAttacked(2, false) &&  // c1 not attacked
+            ((emptyMask & occupied) == 0))  // b1,c1,d1 must be empty
+        {
+            // Perform the castling move
+            whiteKing  &= ~(1ULL << 4);   // remove King from e1
+            whiteKing  |=  (1ULL << 2);   // place King on c1
+            whiteRooks &= ~(1ULL << 0);   // remove Rook from a1
+            whiteRooks |=  (1ULL << 3);   // place Rook on d1
+            canCastleWhiteKing  = false;
+            canCastleWhiteQueen = false;  // King moved
             whitePieces = whitePawns | whiteKnights | whiteBishops |
-              whiteRooks | whiteQueens  | whiteKing;
+                        whiteRooks | whiteQueens | whiteKing;
             blackPieces = blackPawns | blackKnights | blackBishops |
-                          blackRooks | blackQueens  | blackKing;
+                        blackRooks | blackQueens | blackKing;
             return;
+        } else {
+            throw std::invalid_argument("Invalid move for white queenside castling (e1c1).");
         }
-    } else if (move == "e8g8" && (blackKing & (1ULL << 60)) && (blackRooks & (1ULL << 63))) { // Black kingside castling
-        uint64_t emptyMask = (1ULL << 61) | (1ULL << 62);
-        uint64_t occupied = whitePieces | blackPieces;
+
+    } else if (move == "e8g8" && (blackKing & (1ULL << 60)) && (blackRooks & (1ULL << 63))) {
+        // Black kingside castling (King on e8, Rook on h8)
+        uint64_t emptyMask = (1ULL << 61) | (1ULL << 62); // squares f8,g8
+        uint64_t occupied  = whitePieces | blackPieces;
 
         if (canCastleBlackKing &&
             !isSquareAttacked(60, true) && // e8 not attacked
             !isSquareAttacked(61, true) && // f8 not attacked
             !isSquareAttacked(62, true) && // g8 not attacked
-            ((emptyMask & occupied) == 0)) {
-            blackKing &= ~(1ULL << 60); // Remove king from e8
-            blackKing |= (1ULL << 62);  // Place king on g8
-            blackRooks &= ~(1ULL << 63); // Remove rook from h8
-            blackRooks |= (1ULL << 61);  // Place rook on f8
-            canCastleBlackKing = false;
-            canCastleBlackQueen = false; // King moved
+            ((emptyMask & occupied) == 0)) // f8,g8 must be empty
+        {
+            // Perform the castling move
+            blackKing  &= ~(1ULL << 60);  // remove King from e8
+            blackKing  |=  (1ULL << 62);  // place King on g8
+            blackRooks &= ~(1ULL << 63);  // remove Rook from h8
+            blackRooks |=  (1ULL << 61);  // place Rook on f8
+            canCastleBlackKing  = false;
+            canCastleBlackQueen = false;  // King moved
             whitePieces = whitePawns | whiteKnights | whiteBishops |
-              whiteRooks | whiteQueens  | whiteKing;
+                        whiteRooks | whiteQueens | whiteKing;
             blackPieces = blackPawns | blackKnights | blackBishops |
-                          blackRooks | blackQueens  | blackKing;
+                        blackRooks | blackQueens | blackKing;
             return;
+        } else {
+            throw std::invalid_argument("Invalid move for black kingside castling (e8g8).");
         }
-    } else if (move == "e8c8" && (blackKing & (1ULL << 60)) && (blackRooks & (1ULL << 56))) { // Black queenside castling
-        uint64_t emptyMask = (1ULL << 57) | (1ULL << 58) | (1ULL << 59);
-        uint64_t occupied = whitePieces | blackPieces;
+
+    } else if (move == "e8c8" && (blackKing & (1ULL << 60)) && (blackRooks & (1ULL << 56))) {
+        // Black queenside castling (King on e8, Rook on a8)
+        uint64_t emptyMask = (1ULL << 57) | (1ULL << 58) | (1ULL << 59); // squares b8,c8,d8
+        uint64_t occupied  = whitePieces | blackPieces;
 
         if (canCastleBlackQueen &&
             !isSquareAttacked(60, true) && // e8 not attacked
             !isSquareAttacked(59, true) && // d8 not attacked
             !isSquareAttacked(58, true) && // c8 not attacked
-            ((emptyMask & occupied) == 0))  {
-            blackKing &= ~(1ULL << 60); // Remove king from e8
-            blackKing |= (1ULL << 58);  // Place king on c8
-            blackRooks &= ~(1ULL << 56); // Remove rook from a8
-            blackRooks |= (1ULL << 59);  // Place rook on d8
-            canCastleBlackKing = false;
-            canCastleBlackQueen = false; // King moved
+            ((emptyMask & occupied) == 0)) // b8,c8,d8 must be empty
+        {
+            // Perform the castling move
+            blackKing  &= ~(1ULL << 60);  // remove King from e8
+            blackKing  |=  (1ULL << 58);  // place King on c8
+            blackRooks &= ~(1ULL << 56);  // remove Rook from a8
+            blackRooks |=  (1ULL << 59);  // place Rook on d8
+            canCastleBlackKing  = false;
+            canCastleBlackQueen = false;  // King moved
             whitePieces = whitePawns | whiteKnights | whiteBishops |
-              whiteRooks | whiteQueens  | whiteKing;
+                        whiteRooks | whiteQueens | whiteKing;
             blackPieces = blackPawns | blackKnights | blackBishops |
-                          blackRooks | blackQueens  | blackKing;
+                        blackRooks | blackQueens | blackKing;
             return;
+        } else {
+            throw std::invalid_argument("Invalid move for black queenside castling (e8c8).");
         }
     }
-
     // -----------------------------
     // White en passant
     // -----------------------------
@@ -342,17 +370,23 @@ void Bitboard::makeMove(const std::string& move, char promotionPiece) {
     // --------------------------------------------------
     // Handle en passant target if it's a 2-step pawn move
     if (movingWhite) {
-        if (sourceRank == 1 && destRank == 3) {
-            enPassantTarget = destIndex;
-        } else {
-            enPassantTarget = -1;
-        }
+    // White pawn double-move from rank 1 to rank 3:
+    if (sourceRank == 1 && destRank == 3) {
+        // The “in-between” square is rank 2 (one up from source)
+        // sourceIndex + 8 -> move up one rank
+        enPassantTarget = sourceIndex + 8;
     } else {
-        if (sourceRank == 6 && destRank == 4) {
-            enPassantTarget = destIndex;
-        } else {
-            enPassantTarget = -1;
-        }
+        enPassantTarget = -1;
+    }
+    } else {
+    // Black pawn double-move from rank 6 to rank 4:
+    if (sourceRank == 6 && destRank == 4) {
+        // The in-between square is rank 5 (one down from source)
+        // sourceIndex - 8 -> move down one rank
+        enPassantTarget = sourceIndex - 8;
+    } else {
+        enPassantTarget = -1;
+    }
     }
 
     // Ensure castling rights are updated when king or rook moves
@@ -372,9 +406,46 @@ void Bitboard::makeMove(const std::string& move, char promotionPiece) {
         canCastleBlackQueen = false;
     }
 
-    // If it’s a capture, remove occupant from destination.
-    // (For a more complete engine, you'd detect if there's an opponent piece.)
-    clearSquare(destBit);
+    bool isPawn = (pieceBitboard == &whitePawns || pieceBitboard == &blackPawns);
+
+    // If it's a pawn
+    if (isPawn) {
+        int fileDiff = destFile - sourceFile;
+        int rankDiff = destRank - sourceRank;
+
+        // White going up or Black going down
+        // 1) If it's a diagonal move => must capture
+        if (std::abs(fileDiff) == 1 && std::abs(rankDiff) == 1) {
+            // Diagonal => capturing an opponent piece is required
+            // If there's NO opponent piece at destBit, it's illegal
+            if (movingWhite) {
+                if ((destBit & blackPieces) == 0ULL) {
+                    throw std::invalid_argument("Illegal pawn capture: no black piece on destination");
+                }
+            } else {
+                if ((destBit & whitePieces) == 0ULL) {
+                    throw std::invalid_argument("Illegal pawn capture: no white piece on destination");
+                }
+            }
+            clearSquare(destBit);
+
+        // 2) If it's a straight file move => must not capture
+        } else if (fileDiff == 0 && std::abs(rankDiff) >= 1) {
+            // If there's an opponent piece at destBit, that’s illegal
+            if (destBit & (whitePieces | blackPieces)) {
+                throw std::invalid_argument("Illegal pawn move: cannot capture forward");
+            }
+            // No capture => do not clearSquare(destBit)
+
+        } else {
+            // It's neither a valid diagonal nor a valid forward => also illegal
+            throw std::invalid_argument("Illegal pawn move shape");
+        }
+
+    } else {
+        // Normal piece => any occupant on destBit can be captured
+        clearSquare(destBit);
+    }
     whitePieces = whitePawns | whiteKnights | whiteBishops |
               whiteRooks | whiteQueens  | whiteKing;
     blackPieces = blackPawns | blackKnights | blackBishops |

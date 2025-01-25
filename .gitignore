@@ -4,6 +4,7 @@
 /cmake-build-debug/
 .idea/
 .idea/*
+/.vscode/
 
 # Prerequisites
 *.d

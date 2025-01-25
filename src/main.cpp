@@ -64,26 +64,26 @@ int main() {
 
     std::vector<std::pair<std::string, char>> moves = {
         {"e2e4", ' '},  // 1. White
-        {"c7c5", ' '},  // 2. Black
-        {"e4e5", ' '},  // 3. White
-        {"d7d5", ' '},  // 4. Black
-        {"e5d6", ' '},  // 5. White (en passant)
-        {"b8c6", ' '},  // 6. Black
-        {"g1f3", ' '},  // 7. White
-        {"g8f6", ' '},  // 8. Black
-        {"f1e2", ' '},  // 9. White
-        {"e8g8", ' '},  // 10. Black castles kingside
-        {"e1g1", ' '},  // 11. White castles kingside
-        {"a7a6", ' '},  // 12. Black
-        {"h2h4", ' '},  // 13. White
-        {"h7h5", ' '},  // 14. Black
-        {"h4h5", ' '},  // 15. White
-        {"a6a5", ' '},  // 16. Black
-        {"h5h6", ' '},  // 17. White
-        {"a5a4", ' '},  // 18. Black
-        {"h6h7", ' '},  // 19. White
-        {"g7g6", ' '},  // 20. Black
-        {"h7h8", 'Q'}   // 21. White promotes to Queen
+        {"e7e5", ' '},  // 2. Black
+        {"g1f3", ' '},  // 3. White
+        {"b8c6", ' '},  // 4. Black
+        {"b1c3", ' '},  // 5. White (en passant)
+        {"g8f6", ' '},  // 6. Black
+        {"f1b5", ' '},  // 7. White
+        {"f8b4", ' '},  // 8. Black
+        {"a2a3", ' '},  // 9. White
+        {"b4c3", ' '},  // 10. Black castles kingside
+        {"d2c3", ' '},  // 11. White castles kingside
+        {"e8g8", ' '},  // 12. Black
+        {"d1d2", ' '},  // 13. White
+        {"f6e4", ' '},  // 14. Black
+        {"d2d5", ' '},  // 15. White
+        {"e4f6", ' '},  // 16. Black
+        {"d5c4", ' '},  // 17. White
+        {"d7d5", ' '},  // 18. Black
+        {"f3g5", ' '},  // 19. White
+        {"a7a6", ' '},  // 20. Black
+        {"b5c6", ' '}   // 21. White promotes to Queen
     };
 
     bool whiteToMove = true;  // Standard chess starts with White
@@ -100,7 +100,7 @@ int main() {
         std::cout << "\n";
 
         // Execute the move with promotion piece if specified
-        board.makeMove(mv.first, mv.second);
+        board.makeMove(mv.first, 'Q');
 
         // Display the board
         std::cout << board.displayBoard() << "\n";
