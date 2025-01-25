@@ -1,10 +1,14 @@
 #include "bitboard.h"
+#include <bitset>
+#include <iostream>
 
 void Bitboard::generatePawnMoves(std::vector<Move>& moves, bool isWhite) {
     uint64_t pawns = isWhite ? whitePawns : blackPawns;
     uint64_t ownPieces = isWhite ? whitePieces : blackPieces;
     uint64_t opponentPieces = isWhite ? blackPieces : whitePieces;
     uint64_t emptySquares = ~(whitePieces | blackPieces);
+    // Debugging output
+    std::cout << "Empty Squares: " << std::bitset<64>(emptySquares) << "\n";
 
     if (isWhite) {
         // Single-step advances

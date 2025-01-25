@@ -61,3 +61,41 @@ int Bitboard::bitScanForward(uint64_t bitboard) const {
 	}
 	return -1; // Should never happen
 }
+
+int Bitboard::bitCount(uint64_t x) const {
+    // Implement a built-in or fallback
+    // For GCC/Clang: return __builtin_popcountll(x);
+    // For MSVC: use _BitScanForward64 or other intrinsics, or a manual loop
+    int count = 0;
+    while (x) {
+        x &= (x - 1);
+        count++;
+    }
+    return count;
+}
+
+bool Bitboard::isCaptureMove(const std::string& move) const {
+
+	// Implement the logic to check if the move is a capture
+
+	// For example, you can check if the destination square is occupied by an opponent's piece
+
+	int destinationSquare = std::stoi(move.substr(2, 2)); // Assuming move is in format "e2e4"
+
+	return isSquareOccupiedByOpponent(destinationSquare, move[0] >= 'a' && move[0] <= 'h');
+
+}
+
+int Bitboard::getDestinationSquare(const std::string& move) const {
+	// Assuming move is in format "e2e4", extract the destination square
+	return std::stoi(move.substr(2, 2));
+}
+
+bool Bitboard::isSquareOccupiedByOpponent(int squareIndex, bool byWhite) const {
+	uint64_t squareBit = 1ULL << squareIndex;
+	if (byWhite) {
+		return (blackPawns | blackKnights | blackBishops | blackRooks | blackQueens | blackKing) & squareBit;
+	} else {
+		return (whitePawns | whiteKnights | whiteBishops | whiteRooks | whiteQueens | whiteKing) & squareBit;
+	}
+}

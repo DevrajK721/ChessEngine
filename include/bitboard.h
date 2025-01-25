@@ -1,6 +1,7 @@
 #ifndef BITBOARD_H
 #define BITBOARD_H
 
+#pragma once
 #include <cstdint>
 #include <string> // Fix: Include for std::string
 #include <vector>
@@ -33,7 +34,7 @@ public:
 	static constexpr uint64_t Rank7 = Rank1 << 48;
 	static constexpr uint64_t Rank8 = Rank1 << 56;
 
-	// Knight
+	// Knight Precomputed Attacks
 	uint64_t precomputedKnightAttacks[64];
 
 	uint64_t whitePawns = 0;
@@ -52,6 +53,13 @@ public:
 	uint64_t blackKing = 0;
 	uint64_t blackPieces = 0;
 
+	// Zobrist Hashing Setup 
+	uint64_t zobristKey; // Current Position's Hash Key
+	static uint64_t zobristPiece[12][64]; 
+	static uint64_t zobristSideToMove;
+	void updateZobristKey(); // Updates the Zobrist key for the current position
+
+
 	// Initialization
 	Bitboard(); // Constructor declaration
 	void initialize();          // Initializes starting position
@@ -63,6 +71,7 @@ public:
 	void undoMove(const Move& move);
 	std::string formatMove(int sourceIndex, int targetIndex, char promotion = '\0'); // Keep default in header
 	void clearSquare(uint64_t squareBit); // Clears a square on the board
+	std::vector<MoveState> moveHistory; // History of moves
 
 	// Getters
 	int getEnPassantTarget() const; // Getter for enPassantTarget
@@ -104,8 +113,15 @@ public:
 	bool isSquareOccupied(int squareIndex) const; // Determines if a square is occupied
 	bool isBoundaryCrossed(int StartIndex, int currentIndex, int direction)  const;
 	bool isKingInCheck(bool isWhite) const; // Determines if a king is in check
+	bool isCaptureMove(const std::string& move) const;
+	int getDestinationSquare(const std::string& move) const;
+	bool isSquareOccupiedByOpponent(int squareIndex, bool byWhite) const;
+
+	// Zobrist Hashing
+	uint64_t computeZobristKey() const; // Computes the Zobrist key for the current position
 
 	// Miscellaneous
+	int bitCount(uint64_t x) const;
 	int bitScanForward(uint64_t bitboard) const; // Returns the index of the lowest bit
 };
 

@@ -1,114 +1,136 @@
 #include <iostream>
 #include <vector>
 #include <string>
-#include <cstdlib>   // for std::exit
-#include "bitboard.h" // Ensure this declares Bitboard, etc.
+#include <cctype>
+#include <algorithm>   
+#include <limits>      
+#include "bitboard.h"   
+#include "move.h"
+#include "evaluation.h"
+#include "zobrist.h"
+#include "search.h"     
+#include <bitset>
 
-static void waitForUserConfirmation() {
-    std::cout << "Press \033[93mY\033[0m to continue (anything else to quit): ";
-    std::string input;
-    std::getline(std::cin, input);
-    if (input.empty() || (input[0] != 'Y' && input[0] != 'y')) {
-        std::cout << "\nAborting test sequence.\n";
-        std::exit(0);
+// ----------------------------------------------------------------------
+// Helper to prompt user for an integer (the search depth).
+// ----------------------------------------------------------------------
+int askSearchDepth() {
+    std::cout << "Enter desired search depth (e.g. 4, 5, 6...): ";
+    int depth;
+    std::cin >> depth;
+    // Clean up leftover newline
+    if (std::cin.fail() || depth < 1) {
+        depth = 4;
+        std::cin.clear();
     }
+    std::cin.ignore(std::numeric_limits<std::streamsize>::max(), '\n');
+    return depth;
 }
 
-static void displayScenarioInfo() {
-    std::cout << "\033[94mWelcome to the Chess Engine Test!\033[0m\n\n"
-              << "We will run a series of 4-character moves that demonstrate:\n"
-              << "  - En passant (White plays e5d6)\n"
-              << "  - Castling (Black e8g8, White e1g1)\n"
-              << "  - Promotion (White h7h8 with promotion piece 'Q')\n\n"
-              << "After each move, the board will be shown, and you must press\n"
-              << "'Y' to continue. If you press anything else, the program ends,\n"
-              << "so you can pause mid-test.\n\n";
+// ----------------------------------------------------------------------
+// Displays the top 5 moves for the current side, using the chosen search depth
+// We assume your "Search" class has a method "getAllMovesSorted(Bitboard&, int, bool)" 
+// that does a root search and returns a sorted list of (move, score).
+// We'll just show the top 5 from that sorted list.
+// ----------------------------------------------------------------------
+void displayBestMoves(Bitboard& board, bool whiteToMove, int depth) {
+    std::vector<MoveScore> allMoves = Search::getAllMovesSorted(board, depth, whiteToMove);
+
+    std::cout << "\nTop 5 moves (depth " << depth << "):\n";
+    for (size_t i = 0; i < allMoves.size() && i < 5; i++) {
+        auto& ms = allMoves[i];
+        // Score sign depends on perspective, so you can interpret 
+        // it as "positive good for White, negative good for Black".
+        std::cout << "   " << (i+1) << ". " << ms.move 
+                  << "   score: " << ms.score << "\n";
+    }
+    std::cout << "\n";
 }
 
+// ----------------------------------------------------------------------
+// The main game loop: 
+// 1) Display board
+// 2) Show best 5 moves for side to move
+// 3) Prompt user for a move or "exit"
+// 4) Make the move, check game status
+// 5) Switch side
+// ----------------------------------------------------------------------
 int main() {
+    Zobrist::initZobrist(); // Initialize Zobrist hashing
+    Zobrist::initTransTable();
     Bitboard board;
-    board.initialize(); // Standard chess opening position, White to move
+    board.initialize(); 
 
-    displayScenarioInfo();
+    // Debugging output
+    std::cout << "White Pawns: " << std::bitset<64>(board.getWhitePawns()) << "\n";
+    std::cout << "Black Pawns: " << std::bitset<64>(board.getBlackPawns()) << "\n"; 
 
-    // Move list: each is a 4-char move string plus a promotion piece
-    // (use ' ' if not a promotion). This scenario sets up e-pawn pushes
-    // to allow e5d6 en passant, some normal development, castling, and
-    // eventually a White pawn on h7 that promotes on h8.
-    //
-    // Sequence:
-    //   1.  e2e4 (White)
-    //   2.  c7c5 (Black)
-    //   3.  e4e5 (White)
-    //   4.  d7d5 (Black)
-    //   5.  e5d6 (White, en passant capture)
-    //   6.  b8c6 (Black)
-    //   7.  g1f3 (White)
-    //   8.  g8f6 (Black)
-    //   9.  f1e2 (White)
-    //   10. e8g8 (Black castles kingside)
-    //   11. e1g1 (White castles kingside)
-    //   12. a7a6 (Black)
-    //   13. h2h4 (White)
-    //   14. h7h5 (Black)
-    //   15. h4h5 (White)
-    //   16. a6a5 (Black)
-    //   17. h5h6 (White)
-    //   18. a5a4 (Black)
-    //   19. h6h7 (White)
-    //   20. g7g6 (Black)
-    //   21. h7h8 (White promotes to Queen)
-    //
-    //   Note: We rely on your engine's internal logic to allow the en passant
-    //   capture on e5d6 if the position is correct after moves 1-4.
+    bool whiteToMove = true;
 
-    std::vector<std::pair<std::string, char>> moves = {
-        {"e2e4", ' '},  // 1. White
-        {"e7e5", ' '},  // 2. Black
-        {"g1f3", ' '},  // 3. White
-        {"b8c6", ' '},  // 4. Black
-        {"b1c3", ' '},  // 5. White (en passant)
-        {"g8f6", ' '},  // 6. Black
-        {"f1b5", ' '},  // 7. White
-        {"f8b4", ' '},  // 8. Black
-        {"a2a3", ' '},  // 9. White
-        {"b4c3", ' '},  // 10. Black castles kingside
-        {"d2c3", ' '},  // 11. White castles kingside
-        {"e8g8", ' '},  // 12. Black
-        {"d1d2", ' '},  // 13. White
-        {"f6e4", ' '},  // 14. Black
-        {"d2d5", ' '},  // 15. White
-        {"e4f6", ' '},  // 16. Black
-        {"d5c4", ' '},  // 17. White
-        {"d7d5", ' '},  // 18. Black
-        {"f3g5", ' '},  // 19. White
-        {"a7a6", ' '},  // 20. Black
-        {"b5c6", ' '}   // 21. White promotes to Queen
-    };
+    // Ask user what depth to search for best moves
+    int searchDepth = askSearchDepth();
 
-    bool whiteToMove = true;  // Standard chess starts with White
-
-    for (size_t i = 0; i < moves.size(); i++) {
-        const auto& mv = moves[i];
-        std::cout << "\nMove " << (i + 1)
-                  << (whiteToMove ? " (White): " : " (Black): ")
-                  << mv.first;
-
-        if (mv.second != ' ') {
-            std::cout << " with promotion to " << mv.second;
-        }
-        std::cout << "\n";
-
-        // Execute the move with promotion piece if specified
-        board.makeMove(mv.first, 'Q');
-
+    // Clear the input buffer in case there's leftover newline
+    // (We already did a .ignore, but just to be safe.)
+    std::cin.sync(); 
+    try {
+    while (true) {
         // Display the board
+        std::cout << "\n" 
+                  << (whiteToMove ? "[White to move]" : "[Black to move]") 
+                  << "\n";
         std::cout << board.displayBoard() << "\n";
 
-        // Check if the opponent has moves left => might be checkmate or stalemate
-        auto possibleMoves = board.generateLegalMoves(!whiteToMove);
-        if (possibleMoves.empty()) {
-            // If no moves, check if it's checkmate or stalemate
+        // Generate legal moves
+        auto legalMoves = board.generateLegalMoves(whiteToMove);
+        if (legalMoves.empty()) {
+            // No moves => check if it's checkmate or stalemate
+            if (board.isKingInCheck(whiteToMove)) {
+                std::cout << (whiteToMove ? "Black" : "White")
+                          << " wins by checkmate!\n";
+            } else {
+                std::cout << "Stalemate!\n";
+            }
+            break;
+        }
+
+        // Show the best 5 moves from the engine's perspective
+        displayBestMoves(board, whiteToMove, searchDepth);
+
+        // Prompt user for a move
+        std::string userMove;
+        std::cout << "Enter your move in 4-char format (e.g. e2e4) or 'exit' to quit: ";
+        std::getline(std::cin, userMove);
+
+        // Check for exit
+        if (userMove == "exit") {
+            std::cout << "Exiting game.\n";
+            break;
+        }
+        if (userMove.size() != 4) {
+            std::cout << "Invalid move format. Please try again.\n";
+            continue;
+        }
+
+        // Attempt to make the move
+        bool valid = false;
+        // We'll check if userMove is in the legalMoves
+        for (auto &m : legalMoves) {
+            if (m.move == userMove) {
+                // Make the move on the board
+                board.makeMove(userMove, ' '); 
+                valid = true;
+                break;
+            }
+        }
+        if (!valid) {
+            std::cout << "That move wasn't found in the legal moves list. Try again.\n";
+            continue;
+        }
+
+        // If we made a valid move, check if the other side has moves or if game ended
+        auto opponentMoves = board.generateLegalMoves(!whiteToMove);
+        if (opponentMoves.empty()) {
             if (board.isKingInCheck(!whiteToMove)) {
                 std::cout << (whiteToMove ? "White" : "Black")
                           << " wins by checkmate!\n";
@@ -118,13 +140,11 @@ int main() {
             break;
         }
 
-        // Wait for user to press Y or abort
-        waitForUserConfirmation();
-
-        // Switch turn
+        // Switch side
         whiteToMove = !whiteToMove;
+    }} catch (const std::exception& e) {
+        std::cerr << "Error: " << e.what() << "\n";
     }
 
-    std::cout << "\nEnd of the test sequence.\n";
     return 0;
 }

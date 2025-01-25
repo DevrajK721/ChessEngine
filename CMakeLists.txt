@@ -16,13 +16,15 @@ include_directories(${CMAKE_SOURCE_DIR}/include)
 # Add the executable
 add_executable(ChessEngine ${SOURCES}
         src/bitboard.cpp
-        include/bitboard.h
-        include/move.h
         src/move.cpp
         src/bitboard_display.cpp
         src/bitboard_pawn.cpp
         src/bitboard_knight.cpp
         src/bitboard_sliding.cpp
         src/bitboard_king.cpp
-        src/bitboard_misc.cpp)
+        src/bitboard_misc.cpp 
+        src/evaluation.cpp 
+        src/search.cpp
+        src/zobrist.cpp
+        src/main.cpp)
 
