@@ -170,3 +170,27 @@ TEST(MoveGen, PawnPromotion) {
     EXPECT_TRUE(contains_move(moves, "a7a8b", b));
     EXPECT_TRUE(contains_move(moves, "a7a8n", b));
 }
+
+TEST(MoveGen, IllegalMoveInCheck) {
+    init_attacks();
+    Board b; b.init_startpos();
+    std::vector<std::string> seq = {
+        "a2a4","e7e5","b2b4","d8h4","d2d4","d7d6",
+        "c2c4","b8c6","g2g3","h4e4","e2e3","e4h1",
+        "f2f4","h1g1","d1e2","e5d4","e2f2","g1f2",
+        "e1f2","d4e3"
+    };
+    for(const auto &mv : seq){
+        auto legal = generate_legal_moves(b);
+        ASSERT_TRUE(contains_move(legal,mv,b)) << "Illegal move in sequence: " << mv;
+        Move m = parse_move(mv,b);
+        for(const auto &l : legal){
+            if(l.from==m.from && l.to==m.to && l.promotion==m.promotion && l.isCastling==m.isCastling && l.isEnPassant==m.isEnPassant){
+                m = l; break;
+            }
+        }
+        make_move(b,m);
+    }
+    auto legal = generate_legal_moves(b);
+    EXPECT_FALSE(contains_move(legal,"h2h4",b));
+}
