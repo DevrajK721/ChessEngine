@@ -31,15 +31,20 @@ inline int sq_index(char file_char, char rank_char) {
 
 // Display Bitboard 
 inline void display_bitboard(const U64 &b) {
+    auto horiz = [](){
+        std::cout << "  +---+---+---+---+---+---+---+---+\n";
+    };
+    horiz();
     for (int rank = 7; rank >= 0; --rank) {
-        std::cout << rank + 1 << " ";
+        std::cout << rank + 1 << " |";
         for (int file = 0; file < 8; ++file) {
             int sq = sq_index(file, rank);
-            std::cout << (test_bit(b, sq) ? '1' : '0') << ' ';
+            std::cout << ' ' << (test_bit(b, sq) ? '1' : '0') << " |";
         }
-        std::cout << '\n';
+        std::cout << ' ' << rank + 1 << "\n";
+        horiz();
     }
-    std::cout << " a b c d e f g h\n";
+    std::cout << "    a   b   c   d   e   f   g   h\n";
 }
 
 #endif // BITBOARD_HPP

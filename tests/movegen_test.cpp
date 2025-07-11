@@ -133,3 +133,23 @@ TEST(MoveGen, EnPassantSequence) {
     auto legal = generate_legal_moves(b);
     EXPECT_TRUE(contains_move(legal,"e5d6",b));
 }
+
+TEST(MoveGen, KingCheckmate) {
+    init_attacks();
+    Board b; b.init_startpos();
+    std::vector<std::string> seq = {"e2e4","e7e5","f1c4","c7c5","d1f3", "a7a5", "f3f7"};
+    for(const auto& mv : seq){
+        auto legal = generate_legal_moves(b);
+        ASSERT_TRUE(contains_move(legal,mv,b)) << "Illegal move in sequence: " << mv;
+        Move m = parse_move(mv,b);
+        for(const auto& l : legal){
+            if(l.from==m.from && l.to==m.to && l.promotion==m.promotion && l.isCastling==m.isCastling && l.isEnPassant==m.isEnPassant){
+                m = l; break;
+            }
+        }
+        make_move(b,m);
+    }
+    // Move to test size of legal moves after checkmate is 0
+    auto legal = generate_legal_moves(b);
+    EXPECT_TRUE(legal.empty());
+}
