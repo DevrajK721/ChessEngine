@@ -12,9 +12,20 @@ target_link_libraries(test_env
     Threads::Threads
 )
 
+# Include engine sources for the board initialization test
+set(ENGINE_SOURCES
+    ${CMAKE_SOURCE_DIR}/src/board.cpp
+    ${CMAKE_SOURCE_DIR}/src/attacks.cpp
+)
+add_executable(board_init_test board_init.cpp ${ENGINE_SOURCES})
+
 # 4) Register the test with CTest
 add_test(
     NAME EnvSanityCheck
     COMMAND test_env
 )
 
+add_test(
+    NAME BoardInitialization
+    COMMAND board_init_test
+)
