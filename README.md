@@ -1,5 +1,7 @@
 # ChessEngine
-Development of a Chess Engine in C++ inclusive of game logic (wiht special moves), interactive gameplay and engine with a custom evaluation function. 
+Development of a Chess Engine in C++ inclusive of game logic (with special moves), interactive gameplay and engine with a custom evaluation function. 
+
+![Gameplay](images/Gameplay.gif)
 
 ## Usage 
 ### Setup (MacOS)
