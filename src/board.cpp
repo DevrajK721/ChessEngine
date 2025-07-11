@@ -143,3 +143,24 @@ bool Board::is_square_attacked(int sq, Color bySide) const {
 
 }
 
+PieceType Board::piece_at(int sq, Color &color_out) const {
+    U64 mask = 1ULL << sq;
+    for (Color c : {WHITE, BLACK}) {
+        for (int pt = PAWN; pt <= KING; ++pt) {
+            if (bitboards[board_index(c, static_cast<PieceType>(pt))] & mask) {
+                color_out = c;
+                return static_cast<PieceType>(pt);
+            }
+        }
+    }
+    color_out = BOTH;
+    return NO_PIECE;
+}
+
+int Board::king_square(Color c) const {
+    U64 bb = bitboards[board_index(c, KING)];
+    if (!bb)
+        return -1;
+    return __builtin_ctzll(bb);
+}
+

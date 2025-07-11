@@ -16,10 +16,18 @@ target_link_libraries(test_env
 set(ENGINE_SOURCES
     ${CMAKE_SOURCE_DIR}/src/board.cpp
     ${CMAKE_SOURCE_DIR}/src/attacks.cpp
+    ${CMAKE_SOURCE_DIR}/src/movegen.cpp
 )
 add_executable(board_init_test board_init.cpp ${ENGINE_SOURCES})
+add_executable(movegen_test movegen_test.cpp ${ENGINE_SOURCES})
 
 target_link_libraries(board_init_test
+  PRIVATE
+    GTest::gtest_main         # this is the static gtest_main target
+    Threads::Threads
+)
+
+target_link_libraries(movegen_test
   PRIVATE
     GTest::gtest_main         # this is the static gtest_main target
     Threads::Threads
@@ -34,4 +42,9 @@ add_test(
 add_test(
     NAME BoardInitialization
     COMMAND board_init_test
+)
+
+add_test(
+    NAME MoveGeneration
+    COMMAND movegen_test
 )

@@ -36,6 +36,10 @@ struct Board {
 
     // Check square attack 
     bool is_square_attacked(int sq, Color bySide) const;
+
+    PieceType piece_at(int sq, Color &color_out) const;
+
+    int king_square(Color c) const;
 };
 
 #endif // BOARD_HPP
