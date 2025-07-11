@@ -194,3 +194,27 @@ TEST(MoveGen, IllegalMoveInCheck) {
     auto legal = generate_legal_moves(b);
     EXPECT_FALSE(contains_move(legal,"h2h4",b));
 }
+
+TEST(MoveGen, KingReturnF2F1) {
+    init_attacks();
+    Board b; b.init_startpos();
+    std::vector<std::string> seq = {
+        "e2e4","g8f6","b1c3","b8c6","g1f3","c6b4","a2a3","b4c6",
+        "d2d4","f6g4","f1e2","a8b8","h2h3","g4f2","e1f2","e7e6",
+        "h1e1","f8d6","e4e5","c6e5","d4e5","d6c5","c1e3","d8e7",
+        "e3c5","e7c5"
+    };
+    for(const auto &mv : seq){
+        auto legal = generate_legal_moves(b);
+        ASSERT_TRUE(contains_move(legal,mv,b)) << "Illegal move in sequence: " << mv;
+        Move m = parse_move(mv,b);
+        for(const auto &l : legal){
+            if(l.from==m.from && l.to==m.to && l.promotion==m.promotion && l.isCastling==m.isCastling && l.isEnPassant==m.isEnPassant){
+                m = l; break;
+            }
+        }
+        make_move(b,m);
+    }
+    auto legal = generate_legal_moves(b);
+    EXPECT_TRUE(contains_move(legal,"f2f1",b));
+}

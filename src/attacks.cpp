@@ -32,12 +32,14 @@ void init_leaper_attacks() {
         knightAttacks[sq] = knight;
 
         // King Moves (Done by shifting the bitboard left and right)
-        king |= (b & FILE_H_MASK) << 1; // 1 right
-        king |= (b & FILE_A_MASK) >> 1; // 1 left
-        king |= (b & FILE_H_MASK) << 9; // 1 up, 1 right
-        king |= (b & FILE_A_MASK) << 7; // 1 up, 1 left
-        king |= (b & FILE_H_MASK) >> 7; // 1 down, 1 right
-        king |= (b & FILE_A_MASK) >> 9; // 1 down, 1 left
+        king |= (b & FILE_H_MASK) << 1;  // 1 right
+        king |= (b & FILE_A_MASK) >> 1;  // 1 left
+        king |= (b & FILE_H_MASK) << 9;  // 1 up, 1 right
+        king |= (b & FILE_A_MASK) << 7;  // 1 up, 1 left
+        king |= (b & FILE_H_MASK) >> 7;  // 1 down, 1 right
+        king |= (b & FILE_A_MASK) >> 9;  // 1 down, 1 left
+        if (sq + 8 < 64) king |= 1ULL << (sq + 8);   // 1 up
+        if (sq >= 8)     king |= 1ULL << (sq - 8);   // 1 down
         kingAttacks[sq] = king;
     }
 }
