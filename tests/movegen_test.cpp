@@ -1,3 +1,4 @@
+#include <iostream>
 #include <gtest/gtest.h>
 #include "board.hpp"
 #include "movegen.hpp"
@@ -37,7 +38,7 @@ TEST(MoveGen, Checkmate) {
     set_bit(b.bitboards[board_index(WHITE,KING)], sq_index('h','1'));
     set_bit(b.bitboards[board_index(BLACK,QUEEN)], sq_index('g','2'));
     set_bit(b.bitboards[board_index(BLACK,ROOK)], sq_index('h','2'));
-    set_bit(b.bitboards[board_index(BLACK,KING)], sq_index('a','8'));
+    set_bit(b.bitboards[board_index(BLACK,KING)], sq_index('h','8'));
     b.sideToMove = WHITE; b.recompute_occupancy();
     auto moves = generate_legal_moves(b);
     EXPECT_EQ(moves.size(), 0);
@@ -74,7 +75,7 @@ TEST(MoveGen, CastlingLegal) {
     Board b; b.bitboards.fill(0ULL);
     set_bit(b.bitboards[board_index(WHITE,KING)], sq_index('e','1'));
     set_bit(b.bitboards[board_index(WHITE,ROOK)], sq_index('h','1'));
-    set_bit(b.bitboards[board_index(BLACK,KING)], sq_index('a','8'));
+    set_bit(b.bitboards[board_index(BLACK,KING)], sq_index('h','8'));
     b.w_can_castle_k = true;
     b.sideToMove = WHITE;
     b.recompute_occupancy();
@@ -88,7 +89,7 @@ TEST(MoveGen, CastlingIllegal) {
     set_bit(b.bitboards[board_index(WHITE,KING)], sq_index('e','1'));
     set_bit(b.bitboards[board_index(WHITE,ROOK)], sq_index('h','1'));
     set_bit(b.bitboards[board_index(WHITE,KNIGHT)], sq_index('g','1'));
-    set_bit(b.bitboards[board_index(BLACK,KING)], sq_index('a','8'));
+    set_bit(b.bitboards[board_index(BLACK,KING)], sq_index('h','8'));
     b.w_can_castle_k = true;
     b.sideToMove = WHITE;
     b.recompute_occupancy();
@@ -152,4 +153,20 @@ TEST(MoveGen, KingCheckmate) {
     // Move to test size of legal moves after checkmate is 0
     auto legal = generate_legal_moves(b);
     EXPECT_TRUE(legal.empty());
+}
+
+TEST(MoveGen, PawnPromotion) {
+    init_attacks();
+    Board b; b.bitboards.fill(0ULL);
+    set_bit(b.bitboards[board_index(WHITE,KING)], sq_index('h','1'));
+    set_bit(b.bitboards[board_index(BLACK,KING)], sq_index('h','8'));
+    set_bit(b.bitboards[board_index(WHITE,PAWN)], sq_index('a','7'));
+    b.sideToMove = WHITE;
+    b.recompute_occupancy();
+    auto moves = generate_legal_moves(b);
+    EXPECT_GE(moves.size(), 4);
+    EXPECT_TRUE(contains_move(moves, "a7a8q", b));
+    EXPECT_TRUE(contains_move(moves, "a7a8r", b));
+    EXPECT_TRUE(contains_move(moves, "a7a8b", b));
+    EXPECT_TRUE(contains_move(moves, "a7a8n", b));
 }

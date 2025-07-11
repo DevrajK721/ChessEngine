@@ -152,11 +152,17 @@ void undo_move(Board &b, const Move &m, const Undo &u) {
 
 static void add_move(std::vector<Move> &moves, Move m, const Board &b) {
     if(m.piece == PAWN && (m.to < 8 || m.to >= 56)) {
-        // generate promotions to queen only to keep things simple
-        m.promotion = QUEEN;
-        m.isDoublePush = false;
+        // promotion
+        static const PieceType promos[4] = {QUEEN, ROOK, BISHOP, KNIGHT};
+        for(PieceType p : promos){
+            Move pm = m;
+            pm.promotion = p;
+            pm.isDoublePush = false;
+            moves.push_back(pm);
+        }
+    } else {
+        moves.push_back(m);
     }
-    moves.push_back(m);
 }
 
 static void generate_pseudo(const Board &b, std::vector<Move> &moves) {

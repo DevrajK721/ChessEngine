@@ -11,7 +11,7 @@ int main() {
     board.init_startpos();
 
     while (true) {
-        display_board(board);
+        display_board(board, true);
         auto legal = generate_legal_moves(board);
 
         if (legal.empty()) {

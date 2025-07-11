@@ -18,6 +18,7 @@ set(ENGINE_SOURCES
     ${CMAKE_SOURCE_DIR}/src/attacks.cpp
     ${CMAKE_SOURCE_DIR}/src/movegen.cpp
     ${CMAKE_SOURCE_DIR}/src/engine.cpp
+    ${CMAKE_SOURCE_DIR}/src/util.cpp
 )
 add_executable(board_init_test board_init.cpp ${ENGINE_SOURCES})
 add_executable(movegen_test movegen_test.cpp ${ENGINE_SOURCES})

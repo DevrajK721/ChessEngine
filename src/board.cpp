@@ -1,7 +1,10 @@
 #include "board.hpp"
 #include "attacks.hpp"
+#include "util.hpp"
 #include <initializer_list>
 #include <cassert>
+#include <fstream>
+#include <sstream>
 
 // Helper function to set several bits at once 
 template <size_t N> // Template to handle arrays of different sizes
@@ -164,3 +167,59 @@ int Board::king_square(Color c) const {
     return __builtin_ctzll(bb);
 }
 
+// helper to print a piece as text or as an inline image
+static void print_piece(PieceType pt, Color col, bool images) {
+    if (!images || !std::getenv("ITERM_SESSION_ID")) {
+        const char* pieces = " PNBRQK"; // index by PieceType
+        const char* white = "\033[37m"; // bright white
+        const char* red   = "\033[31m"; // red for black pieces
+        const char* reset = "\033[0m";
+        char ch = ' ';
+        const char* color = reset;
+        if (pt != NO_PIECE) {
+            ch = pieces[pt];
+            color = (col == WHITE) ? white : red;
+            if (col == BLACK)
+                ch = std::tolower(ch);
+        }
+        std::cout << ' ' << color << ch << reset << " |";
+    } else {
+        std::string name;
+        if(col==WHITE) name = "w_"; else name = "b_";
+        switch(pt){
+            case PAWN: name += "pawn"; break;
+            case KNIGHT: name += "knight"; break;
+            case BISHOP: name += "bishop"; break;
+            case ROOK: name += "rook"; break;
+            case QUEEN: name += "queen"; break;
+            case KING: name += "king"; break;
+            default: name = "";
+        }
+        if(name.empty()){ std::cout << "    |"; return; }
+        name = "images/" + name + ".svg";
+        std::ifstream file(name, std::ios::binary);
+        std::ostringstream ss; ss << file.rdbuf();
+        std::string data = ss.str();
+        auto b64 = base64_encode(data);
+        std::cout << " \033]1337;File=inline=1;width=20;height=20;preserveAspectRatio=1:" << b64 << "\a|";
+    }
+}
+
+void display_board(const Board &b, bool images) {
+    auto horiz = [](){
+        std::cout << "  +---+---+---+---+---+---+---+---+\n";
+    };
+
+    horiz();
+    for(int rank=7; rank>=0; --rank){
+        std::cout << rank+1 << " |";
+        for(int file=0; file<8; ++file){
+            int sq = sq_index(file,rank);
+            Color col; PieceType pt = b.piece_at(sq,col);
+            print_piece(pt,col,images);
+        }
+        std::cout << ' ' << rank+1 << "\n";
+        horiz();
+    }
+    std::cout << "    a   b   c   d   e   f   g   h\n";
+}
