@@ -4,6 +4,8 @@
 #include "bitboard.hpp"
 #include "piece.hpp"
 #include <array> 
+#include <cctype>
+#include <iostream>
 
 // Simple struct holding the state to restore
 struct Undo {
@@ -41,5 +43,26 @@ struct Board {
 
     int king_square(Color c) const;
 };
+
+inline void display_board(const Board &b) {
+    const char* pieces = " PNBRQK"; // index by PieceType
+    for (int rank = 7; rank >= 0; --rank) {
+        std::cout << rank + 1 << ' ';
+        for (int file = 0; file < 8; ++file) {
+            int sq = sq_index(file, rank);
+            Color col;
+            PieceType pt = b.piece_at(sq, col);
+            char ch = '.';
+            if (pt != NO_PIECE) {
+                ch = pieces[pt];
+                if (col == BLACK)
+                    ch = std::tolower(ch);
+            }
+            std::cout << ch << ' ';
+        }
+        std::cout << '\n';
+    }
+    std::cout << "  a b c d e f g h\n";
+}
 
 #endif // BOARD_HPP
