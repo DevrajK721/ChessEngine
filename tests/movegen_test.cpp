@@ -95,3 +95,21 @@ TEST(MoveGen, CastlingIllegal) {
     auto moves = generate_legal_moves(b);
     EXPECT_FALSE(contains_move(moves,"e1g1",b));
 }
+
+TEST(MoveGen, PlaySequence) {
+    init_attacks();
+    Board b; b.init_startpos();
+    std::vector<std::string> seq = {"e2e4","e7e5","g1f3","b8c6","f1c4","f8c5","b1c3","g8f6","e1g1","e8g8"};
+    for(const auto& mv : seq){
+        auto legal = generate_legal_moves(b);
+        ASSERT_TRUE(contains_move(legal,mv,b)) << "Illegal move in sequence: " << mv;
+        Move m = parse_move(mv,b);
+        // replace with the fully defined move from legal list
+        for(const auto& l : legal){
+            if(l.from==m.from && l.to==m.to && l.promotion==m.promotion && l.isCastling==m.isCastling && l.isEnPassant==m.isEnPassant){
+                m = l; break;
+            }
+        }
+        make_move(b,m);
+    }
+}

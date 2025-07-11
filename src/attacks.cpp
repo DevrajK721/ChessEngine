@@ -54,29 +54,23 @@ void init_pawn_attacks() {
     }
 }
 
-static U64 slding_attacks(int sq, U64 occ, const int directions[], int dirCount) {
-    U64 attacks = 0ULL; // Initialize attacks
-    
-    int ri = sq / 8; // Row Index 
-    int fi = sq & 8; // File Index
+static U64 sliding_attacks(int sq, U64 occ,
+                           const int dr[], const int df[], int dirCount) {
+    U64 attacks = 0ULL;
+    int r0 = sq / 8;
+    int f0 = sq % 8;
 
-    for (int i = 0; i < dirCount; i++) {
-        int d = directions[i];
-
-        int t_sq = sq; // Temporary Square Index for directional iteration
-        while (true) {
-            int tr = (t_sq / 8) + (d / 8); // Target Row Index
-            int tf = (t_sq % 8) + (d % 8); // Target File Index
-
-            if (tr < 0 || tr >= 8 || tf < 0 || tf >= 8) {
-                break; // Out of bounds
-            }
-
-            t_sq += d; // Move to the next square
-            attacks |= (1ULL << t_sq); 
-            if (occ & (1ULL << t_sq)) {
-                break; // Stop if we hit an occupied square
-            }
+    for (int i = 0; i < dirCount; ++i) {
+        int r = r0 + dr[i];
+        int f = f0 + df[i];
+        int t = sq;
+        while (r >= 0 && r < 8 && f >= 0 && f < 8) {
+            t += dr[i] * 8 + df[i];
+            attacks |= (1ULL << t);
+            if (occ & (1ULL << t))
+                break;
+            r += dr[i];
+            f += df[i];
         }
     }
     return attacks;
@@ -84,14 +78,14 @@ static U64 slding_attacks(int sq, U64 occ, const int directions[], int dirCount)
 
 U64 rook_attacks(int sq, U64 occ) {
     // Directions for Rook: N, E, S, W
-    static const int rookDirections[4] = {+8, +1, -8, -1};
-
-    return slding_attacks(sq, occ, rookDirections, 4);
+    static const int dr[4] = {1, 0, -1, 0};
+    static const int df[4] = {0, 1, 0, -1};
+    return sliding_attacks(sq, occ, dr, df, 4);
 }
 
 U64 bishop_attacks(int sq, U64 occ) {
     // Directions for Bishop: NE, SE, SW, NW
-    static const int bishopDirections[4] = {+9, -7, -9, +7};
-
-    return slding_attacks(sq, occ, bishopDirections, 4);
+    static const int dr[4] = {1, -1, -1, 1};
+    static const int df[4] = {1, 1, -1, -1};
+    return sliding_attacks(sq, occ, dr, df, 4);
 }
