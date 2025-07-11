@@ -1,6 +1,7 @@
 #include "board.hpp"
 #include "movegen.hpp"
 #include "attacks.hpp"
+#include "engine.hpp"
 #include <iostream>
 #include <string>
 
@@ -26,12 +27,33 @@ int main() {
         }
 
         std::cout << (board.sideToMove == WHITE ? "White" : "Black")
-                  << " to move: ";
+                  << " to move (or 'ai'): ";
         std::string input;
         if (!(std::cin >> input))
             break;
         if (input == "quit" || input == "exit")
             break;
+
+        if (input == "ai") {
+            auto res = Engine::search(board,5);
+            std::string uci;
+            char f1 = 'a' + (res.bestMove.from % 8);
+            char r1 = '1' + (res.bestMove.from / 8);
+            char f2 = 'a' + (res.bestMove.to % 8);
+            char r2 = '1' + (res.bestMove.to / 8);
+            uci.push_back(f1); uci.push_back(r1);
+            uci.push_back(f2); uci.push_back(r2);
+            if (res.bestMove.promotion != NO_PIECE) {
+                char p = 'q';
+                if(res.bestMove.promotion==ROOK) p='r';
+                else if(res.bestMove.promotion==BISHOP) p='b';
+                else if(res.bestMove.promotion==KNIGHT) p='n';
+                uci.push_back(p);
+            }
+            std::cout << "Engine plays: " << uci << "\n";
+            make_move(board, res.bestMove);
+            continue;
+        }
 
         Move m = parse_move(input, board);
         bool found = false;
