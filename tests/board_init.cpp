@@ -43,8 +43,3 @@ TEST(BoardInitTest, StartingPosition) {
     EXPECT_EQ(board.blackOccupancy, black_occ);
     EXPECT_EQ(board.bothOccupancy, (white_occ | black_occ));
 }
-
-int main(int argc, char **argv) {
-    ::testing::InitGoogleTest(&argc, argv);
-    return RUN_ALL_TESTS();
-}
