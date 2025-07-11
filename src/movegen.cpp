@@ -60,6 +60,16 @@ Undo make_move(Board &b, const Move &m) {
     } else if(pieceAtDest != NO_PIECE) {
         clear_bit(b.bitboards[board_index(capColor, pieceAtDest)], m.to);
         u.captured = pieceAtDest;
+        // update castling rights if a rook is captured on its initial square
+        if(pieceAtDest == ROOK) {
+            if(capColor == WHITE) {
+                if(m.to == sq_index('h','1')) b.w_can_castle_k = false;
+                if(m.to == sq_index('a','1')) b.w_can_castle_q = false;
+            } else {
+                if(m.to == sq_index('h','8')) b.b_can_castle_k = false;
+                if(m.to == sq_index('a','8')) b.b_can_castle_q = false;
+            }
+        }
     }
 
     // move piece
@@ -189,7 +199,8 @@ static void generate_pseudo(const Board &b, std::vector<Move> &moves) {
         U64 caps = pawnAttacks[us==WHITE?0:1][from] & themOcc;
         while(caps) {
             int capSq = pop_lsb(caps);
-            Move m{from,capSq,PAWN,NO_PIECE,NO_PIECE,false,false,false};
+            Color col; PieceType capPiece = b.piece_at(capSq, col);
+            Move m{from,capSq,PAWN,capPiece,NO_PIECE,false,false,false};
             add_move(moves,m,b);
         }
         if(b.enPassantSquare != -1 && (pawnAttacks[us==WHITE?0:1][from] & (1ULL<<b.enPassantSquare))) {

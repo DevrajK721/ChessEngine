@@ -104,22 +104,14 @@ void Board::recompute_occupancy() {
 }
 
 bool Board::is_square_attacked(int sq, Color bySide) const {
-    U64 occ = bothOccupancy; // Local copy of occupancy bitboard
-    Color other = bySide == WHITE ? BLACK : WHITE; // Determine the opponent's color from who's turn it is
-
-    // Check for pawn attacks 
-    int pi = board_index(bySide, PAWN); // Get the index for the pawn for current side
     if (bySide == WHITE) {
-        // Get pawn attacks from black pawns and compare to positions on white bitboards
-        if (pawnAttacks[0][sq] & bitboards[pi]) {
+        if (pawnAttacks[1][sq] & bitboards[board_index(WHITE, PAWN)])
             return true;
-        } else {
-            // Get pawn attacks from black pawns and compare to positions on white bitboards
-            if (pawnAttacks[1][sq] & bitboards[pi]) {
-                return true;
-            }
-        }
+    } else {
+        if (pawnAttacks[0][sq] & bitboards[board_index(BLACK, PAWN)]) return true;
     }
+
+    U64 occ = bothOccupancy; 
 
     // Check for knight attacks 
     if (knightAttacks[sq] & bitboards[board_index(bySide, KNIGHT)]) {

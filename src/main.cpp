@@ -35,7 +35,7 @@ int main() {
             break;
 
         if (input == "ai") {
-            auto res = Engine::search(board,5);
+            auto res = Engine::search(board, 3);
             std::string uci;
             char f1 = 'a' + (res.bestMove.from % 8);
             char r1 = '1' + (res.bestMove.from / 8);
