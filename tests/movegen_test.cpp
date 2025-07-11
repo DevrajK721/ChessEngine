@@ -113,3 +113,23 @@ TEST(MoveGen, PlaySequence) {
         make_move(b,m);
     }
 }
+
+TEST(MoveGen, EnPassantSequence) {
+    init_attacks();
+    Board b; b.init_startpos();
+    std::vector<std::string> seq = {"e2e4","a7a5","e4e5","d7d5"};
+    for(const auto& mv : seq){
+        auto legal = generate_legal_moves(b);
+        ASSERT_TRUE(contains_move(legal,mv,b)) << "Illegal move in sequence: " << mv;
+        Move m = parse_move(mv,b);
+        for(const auto& l : legal){
+            if(l.from==m.from && l.to==m.to && l.promotion==m.promotion && l.isCastling==m.isCastling && l.isEnPassant==m.isEnPassant){
+                m = l; break;
+            }
+        }
+        make_move(b,m);
+    }
+    // Move to test en passant
+    auto legal = generate_legal_moves(b);
+    EXPECT_TRUE(contains_move(legal,"e5d6",b));
+}
