@@ -254,7 +254,8 @@ static void generate_pseudo(const Board &b, std::vector<Move> &moves) {
 
     // Castling
     if(us==WHITE) {
-        if(b.w_can_castle_k && !(b.bothOccupancy & ((1ULL<<sq_index('f','1'))|(1ULL<<sq_index('g','1'))))) {
+        if(b.w_can_castle_k && test_bit(b.bitboards[board_index(WHITE, ROOK)], sq_index('h','1')) &&
+           !(b.bothOccupancy & ((1ULL<<sq_index('f','1'))|(1ULL<<sq_index('g','1'))))) {
             if(!b.is_square_attacked(sq_index('e','1'), BLACK) &&
                !b.is_square_attacked(sq_index('f','1'), BLACK) &&
                !b.is_square_attacked(sq_index('g','1'), BLACK)) {
@@ -262,7 +263,8 @@ static void generate_pseudo(const Board &b, std::vector<Move> &moves) {
                 moves.push_back(m);
             }
         }
-        if(b.w_can_castle_q && !(b.bothOccupancy & ((1ULL<<sq_index('b','1'))|(1ULL<<sq_index('c','1'))|(1ULL<<sq_index('d','1'))))) {
+        if(b.w_can_castle_q && test_bit(b.bitboards[board_index(WHITE, ROOK)], sq_index('a','1')) &&
+           !(b.bothOccupancy & ((1ULL<<sq_index('b','1'))|(1ULL<<sq_index('c','1'))|(1ULL<<sq_index('d','1'))))) {
             if(!b.is_square_attacked(sq_index('e','1'), BLACK) &&
                !b.is_square_attacked(sq_index('d','1'), BLACK) &&
                !b.is_square_attacked(sq_index('c','1'), BLACK)) {
@@ -271,7 +273,8 @@ static void generate_pseudo(const Board &b, std::vector<Move> &moves) {
             }
         }
     } else {
-        if(b.b_can_castle_k && !(b.bothOccupancy & ((1ULL<<sq_index('f','8'))|(1ULL<<sq_index('g','8'))))) {
+        if(b.b_can_castle_k && test_bit(b.bitboards[board_index(BLACK, ROOK)], sq_index('h','8')) &&
+           !(b.bothOccupancy & ((1ULL<<sq_index('f','8'))|(1ULL<<sq_index('g','8'))))) {
             if(!b.is_square_attacked(sq_index('e','8'), WHITE) &&
                !b.is_square_attacked(sq_index('f','8'), WHITE) &&
                !b.is_square_attacked(sq_index('g','8'), WHITE)) {
@@ -279,7 +282,8 @@ static void generate_pseudo(const Board &b, std::vector<Move> &moves) {
                 moves.push_back(m);
             }
         }
-        if(b.b_can_castle_q && !(b.bothOccupancy & ((1ULL<<sq_index('b','8'))|(1ULL<<sq_index('c','8'))|(1ULL<<sq_index('d','8'))))) {
+        if(b.b_can_castle_q && test_bit(b.bitboards[board_index(BLACK, ROOK)], sq_index('a','8')) &&
+           !(b.bothOccupancy & ((1ULL<<sq_index('b','8'))|(1ULL<<sq_index('c','8'))|(1ULL<<sq_index('d','8'))))) {
             if(!b.is_square_attacked(sq_index('e','8'), WHITE) &&
                !b.is_square_attacked(sq_index('d','8'), WHITE) &&
                !b.is_square_attacked(sq_index('c','8'), WHITE)) {

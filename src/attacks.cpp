@@ -4,9 +4,11 @@ U64 knightAttacks[64];
 U64 kingAttacks[64];
 U64 pawnAttacks[2][64];
 
-// Masks to prevent wrap around on file A/H
-constexpr U64 FILE_A_MASK = 0xFEFEFEFEFEFEFEFEULL; // Mask for file A
-constexpr U64 FILE_H_MASK = 0x7F7F7F7F7F7F7F7FULL; // Mask for file H
+// Masks to prevent wrap around on board edges
+constexpr U64 FILE_A_MASK = 0xFEFEFEFEFEFEFEFEULL; // ~file A
+constexpr U64 FILE_H_MASK = 0x7F7F7F7F7F7F7F7FULL; // ~file H
+constexpr U64 FILE_AB_MASK = 0xFCFCFCFCFCFCFCFCULL; // ~files A&B
+constexpr U64 FILE_GH_MASK = 0x3F3F3F3F3F3F3F3FULL; // ~files G&H
 
 void init_attacks() {
     init_leaper_attacks(); // Initialize knight and king attacks
@@ -19,25 +21,23 @@ void init_leaper_attacks() {
         U64 knight = 0, king = 0;
 
         // Knight Jumps (Done by shifting the bitboard left and right)
-        knight |= (b << 17) & FILE_A_MASK; // 2 up, 1 right
-        knight |= (b << 15) & FILE_H_MASK; // 2 up, 1 left
-        knight |= (b << 10) & FILE_A_MASK; // 1 up, 2 right
-        knight |= (b << 6) & FILE_H_MASK;  // 1 up, 2 left
-        knight |= (b >> 6) & FILE_A_MASK;  // 1 down, 2 right
-        knight |= (b >> 10) & FILE_H_MASK; // 1 down, 2 left
-        knight |= (b >> 15) & FILE_A_MASK; // 2 down, 1 right
-        knight |= (b >> 17) & FILE_H_MASK; // 2 down, 1 left
+        knight |= (b & FILE_H_MASK) << 17; // 2 up, 1 right
+        knight |= (b & FILE_A_MASK) << 15; // 2 up, 1 left
+        knight |= (b & FILE_GH_MASK) << 10; // 1 up, 2 right
+        knight |= (b & FILE_AB_MASK) << 6;  // 1 up, 2 left
+        knight |= (b & FILE_GH_MASK) >> 6;  // 1 down, 2 right
+        knight |= (b & FILE_AB_MASK) >> 10; // 1 down, 2 left
+        knight |= (b & FILE_H_MASK) >> 15; // 2 down, 1 right
+        knight |= (b & FILE_A_MASK) >> 17; // 2 down, 1 left
         knightAttacks[sq] = knight;
 
         // King Moves (Done by shifting the bitboard left and right)
-        king |= (b << 8); // 1 up
-        king |= (b >> 8); // 1 down
-        king |= (b << 1) & FILE_H_MASK; // 1 right
-        king |= (b >> 1) & FILE_A_MASK; // 1 left
-        king |= (b << 9) & FILE_H_MASK; // 1 up, 1 right
-        king |= (b << 7) & FILE_A_MASK; // 1 up, 1 left
-        king |= (b >> 7) & FILE_H_MASK; // 1 down, 1 right
-        king |= (b >> 9) & FILE_A_MASK; // 1 down, 1 left
+        king |= (b & FILE_H_MASK) << 1; // 1 right
+        king |= (b & FILE_A_MASK) >> 1; // 1 left
+        king |= (b & FILE_H_MASK) << 9; // 1 up, 1 right
+        king |= (b & FILE_A_MASK) << 7; // 1 up, 1 left
+        king |= (b & FILE_H_MASK) >> 7; // 1 down, 1 right
+        king |= (b & FILE_A_MASK) >> 9; // 1 down, 1 left
         kingAttacks[sq] = king;
     }
 }
@@ -47,10 +47,10 @@ void init_pawn_attacks() {
         U64 b = 1ULL << sq; 
 
         // White Pawn Attacks (North-East and North-West)
-        pawnAttacks[0][sq] = ((b << 9) & FILE_A_MASK) | ((b << 7) & FILE_H_MASK);
+        pawnAttacks[0][sq] = ((b & FILE_H_MASK) << 9) | ((b & FILE_A_MASK) << 7);
 
         // Black Pawn Attacks (South-East and South-West)
-        pawnAttacks[1][sq] = ((b >> 7) & FILE_A_MASK) | ((b >> 9) & FILE_H_MASK);
+        pawnAttacks[1][sq] = ((b & FILE_H_MASK) >> 7) | ((b & FILE_A_MASK) >> 9);
     }
 }
 
