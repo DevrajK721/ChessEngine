@@ -1,5 +1,11 @@
 #include "attacks.hpp"
 
+// Leaper and pawn attack tables.  These are filled once at start up by
+// init_attacks() and then reused throughout the program.
+U64 knightAttacks[64];
+U64 kingAttacks[64];
+U64 pawnAttacks[2][64];
+
 // Masks to prevent wrap around on file A/H
 constexpr U64 FILE_A_MASK = 0xFEFEFEFEFEFEFEFEULL; // Mask for file A
 constexpr U64 FILE_H_MASK = 0x7F7F7F7F7F7F7F7FULL; // Mask for file H
@@ -43,10 +49,14 @@ void init_pawn_attacks() {
         U64 b = 1ULL << sq; 
 
         // White Pawn Attacks (North-East and North-West)
-        pawnAttacks[0][sq] = ((b << 9) & not FILE_A_MASK) | ((b << 7) & FILE_H_MASK);
+        // NE and NW moves for white pawns.  FILE_A_MASK and FILE_H_MASK are
+        // precomputed masks that remove squares on the A and H files
+        // respectively to avoid wrap around when shifting.
+        pawnAttacks[0][sq] = ((b << 9) & FILE_A_MASK) | ((b << 7) & FILE_H_MASK);
 
         // Black Pawn Attacks (South-East and South-West)
-        pawnAttacks[1][sq] = ((b >> 7) & not FILE_A_MASK) | ((b >> 9) & FILE_H_MASK);
+        // SE and SW moves for black pawns
+        pawnAttacks[1][sq] = ((b >> 7) & FILE_A_MASK) | ((b >> 9) & FILE_H_MASK);
     }
 }
 
